@@ -1,6 +1,6 @@
 # 💕 Proyecto Amorchi
 
-Una página web romántica celebrando 14 años de amor, creada con mucho cariño.
+Una página web romántica celebrando 14 años de amor, creada con mucho cariño y buenas prácticas de desarrollo.
 
 ## 📖 Historia
 
@@ -8,21 +8,45 @@ Una página web romántica celebrando 14 años de amor, creada con mucho cariño
 
 Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aventura para toda la vida.
 
-## ✨ Características
+## ✨ Características principales
 
-- 🎨 Diseño romántico con paleta de colores rosa y dorado
-- 📸 Galería de momentos especiales
-- 🎵 Player de música con el tema de Prontera
-- 💖 Corazones flotantes animados
-- 📱 Totalmente responsive
-- ♿ Accesibilidad mejorada
+| Característica | Descripción |
+|----------------|-------------|
+| 🎨 **Diseño romántico** | Paleta de colores rosa y dorado con gradientes suaves |
+| 📸 **Galería de momentos** | Tarjetas con fotos y descripciones de momentos especiales |
+| 🎵 **Reproductor de música** | Player con el tema de Prontera de Ragnarok Online |
+| 💖 **Corazones flotantes** | Animación de emojis que ascienden por la pantalla |
+| 📱 **Diseño responsive** | Se adapta a móviles, tabletas y escritorio |
+| ♿ **Accesibilidad** | Cumple estándares WCAG con soporte para `prefers-reduced-motion` |
+| 🎭 **Animaciones suaves** | Transiciones con IntersectionObserver para aparición progresiva |
+
+## 🔧 Mejoras implementadas
+
+### Corrección de errores críticos
+
+- **Bug del reproductor de audio**: Se corrigió un error donde `audio` se utilizaba antes de ser declarado, lo que impedía la reproducción automática al iniciar la experiencia.
+
+### Accesibilidad
+
+- **`prefers-reduced-motion`**: Las animaciones se desactivan automáticamente para usuarios con sensibilidad al movimiento o vértigo.
+- **Dimensiones en imágenes**: Todas las imágenes declaran `width` y `height` para prevenir layout shift (CLS).
+- **Contraste mejorado**: Color de texto secundario mejorado de `#55424d` a `#4a3644` para un ratio de contraste de 7:1.
+- **Navegación por teclado**: El reproductor de música es completamente navegable con teclado.
+
+### Código limpio
+
+- **Constantes con nombre**: Valores mágicos reemplazados por constantes descriptivas (`FLOAT_ITEM_LIFETIME`, `FLOAT_ITEM_INTERVAL`).
+- **Español neutro**: Mensajes de error y textos de interfaz en español neutro, sin regionalismos.
+- **Organización del código**: Variables del DOM y reproductor declaradas antes de ser utilizadas.
 
 ## 🛠️ Tecnologías
 
-- HTML5 semántico
-- CSS3 con Custom Properties
-- JavaScript vanilla (sin dependencias)
-- Google Fonts (Cormorant Garamond, Great Vibes, DM Sans)
+| Tecnología | Uso |
+|------------|-----|
+| HTML5 | Estructura semántica con `section`, `article`, `aria-label` |
+| CSS3 | Custom Properties, Flexbox, `clamp()`, `@keyframes` |
+| JavaScript vanilla | Sin dependencias externas, 100% nativo |
+| Google Fonts | Cormorant Garamond, Great Vibes, DM Sans |
 
 ## 🚀 Cómo usar
 
@@ -33,29 +57,105 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 
 2. Abrir `index.html` en tu navegador
 
+3. Hacer clic en "Comenzar nuestra historia" para iniciar la experiencia
+
 ## 📁 Estructura del proyecto
 
 ```
-├── index.html              # Página principal
-├── prontera-theme.mp3      # Música de fondo
-├── ovejita.gif             # GIF decorativo
-├── bubu-dudu.gif           # GIF de la pareja
-├── foto1-primer-encuentro.jpg
-├── foto2-momentos-felices.jpg
-└── foto3-siempre-juntos.jpeg
+├── index.html                    # Página principal (HTML + CSS + JS)
+├── README.md                     # Documentación del proyecto
+├── .gitignore                    # Archivos ignorados por Git
+├── prontera-theme.mp3            # Música de fondo (Tema de Prontera)
+├── ovejita.gif                   # GIF decorativo para las tarjetas
+├── bubu-dudu.gif                 # GIF de la pareja
+├── foto1-primer-encuentro.jpg    # Foto del primer encuentro (2013)
+├── foto2-momentos-felices.jpg    # Foto de momentos felices (2019)
+└── foto3-siempre-juntos.jpeg     # Foto de siempre juntos (2025)
 ```
 
 ## 🎨 Personalización
 
-Para cambiar la música, edita la variable `MUSIC_CONFIG` en el `<script>`:
+### Cambiar la música
+
+Edita la variable `MUSIC_CONFIG` en el `<script>`:
 
 ```javascript
 const MUSIC_CONFIG = {
-  src: './tu-cancion.mp3',
-  title: 'Título de la canción',
-  artist: 'Artista'
+  src: './tu-cancion.mp3',        // Ruta del archivo de audio
+  title: 'Título de la canción',  // Nombre de la canción
+  artist: 'Artista'               // Nombre del artista
 };
 ```
+
+### Cambiar los colores
+
+Modifica las variables CSS en `:root`:
+
+```css
+:root {
+  --accent: #d63384;        /* Color principal (rosa) */
+  --accent-dark: #9b1d55;   /* Versión oscura del acento */
+  --accent-light: #fce7f3;  /* Versión clara del acento */
+  --bg: #fdf6f9;            /* Color de fondo */
+  --ink: #20171c;           /* Color del texto principal */
+  --ink-muted: #4a3644;     /* Color del texto secundario */
+}
+```
+
+### Agregar más momentos
+
+Duplica un bloque `.memory-row` en el HTML y modifica:
+- La imagen (`src` y `alt`)
+- El título (`h3`)
+- La descripción (`p`)
+- El año (`memory-footer-year`)
+
+## 📋 Changelog
+
+### v1.1.0 (2026-09-18)
+
+**Correcciones:**
+- 🐛 Corregido bug crítico que impedía la reproducción del audio
+- 🐛 Eliminadas funciones duplicadas en el JavaScript
+
+**Mejoras:**
+- ♿ Agregado soporte `prefers-reduced-motion` para accesibilidad
+- 🖼️ Agregadas dimensiones a todas las imágenes para prevenir CLS
+- 🎨 Mejorado contraste de texto secundario para mejor legibilidad
+- 🗣️ Textos de interfaz actualizados a español neutro
+
+### v1.0.0 (2026-09-18)
+
+**Versión inicial:**
+- 🎨 Diseño romántico con paleta rosa y dorado
+- 📸 Galería de tres momentos especiales
+- 🎵 Reproductor de música con tema de Prontera
+- 💖 Animación de corazones flotantes
+- 📱 Diseño responsive para todos los dispositivos
+- ♿ Accesibilidad básica (aria-label, roles, navegación por teclado)
+
+## 🔍 Aspectos técnicos destacados
+
+### Optimizaciones de rendimiento
+
+- **IntersectionObserver**: Las animaciones solo se ejecutan cuando las secciones son visibles.
+- **`loading="lazy"`**: Las imágenes se cargan diferidamente.
+- **`will-change`**: Propiedad optimizada para elementos animados.
+- **`image-rendering: pixelated`**: Optimización para GIFs de baja resolución.
+
+### Accesibilidad (a11y)
+
+- ARIA labels en todos los elementos interactivos
+- Roles semánticos (`role="slider"`, `aria-pressed`, `aria-valuenow`)
+- Navegación completa por teclado
+- Soporte para usuarios con preferencias de movimiento reducido
+- Contraste de colores WCAG AA cumplido
+
+### Arquitectura del código
+
+- **CSS Custom Properties**: Fácil mantenimiento y theming
+- **Separación lógica**: CSS para estilos, HTML para estructura, JS para comportamiento
+- **Código autocontenido**: Sin dependencias externas, fácil de mantener
 
 ## 📝 Licencia
 
