@@ -15,7 +15,8 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 | 🎨 **Diseño romántico** | Paleta de colores rosa y dorado con gradientes suaves |
 | 📸 **Galería de momentos** | Tarjetas con fotos y descripciones de momentos especiales |
 | 🎵 **Reproductor de música** | Player con el tema de Prontera de Ragnarok Online |
-| 💖 **Corazones flotantes** | Animación de emojis que ascienden por la pantalla |
+| 💖 **Corazones flotantes** | Animación de emojis que ascienden por la pantalla con control de accesibilidad |
+| 🔘 **Botón de accesibilidad** | Toggle para activar/desactivar corazones flotantes |
 | 📱 **Diseño responsive** | Se adapta a móviles, tabletas y escritorio |
 | ♿ **Accesibilidad** | Cumple estándares WCAG con soporte para `prefers-reduced-motion` |
 | 🎭 **Animaciones suaves** | Transiciones con IntersectionObserver para aparición progresiva |
@@ -26,12 +27,21 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 
 - **Bug del reproductor de audio**: Se corrigió un error donde `audio` se utilizaba antes de ser declarado, lo que impedía la reproducción automática al iniciar la experiencia.
 
+### Funcionalidad de corazones flotantes
+
+- **Corazones por defecto**: Los corazones aparecen automáticamente al cargar la página.
+- **Botón de accesibilidad**: Ubicado en la esquina inferior derecha, permite activar o desactivar los corazones con un solo clic.
+- **Toggle inteligente**: El botón muestra el estado actual ("Corazones: ON" o "Corazones: OFF") y controla la generación de nuevos corazones en tiempo real.
+- **Limpieza automática**: Al desactivar, se eliminan todos los corazones existentes de la pantalla.
+- **Preservación de preferencias**: Respeta la configuración `prefers-reduced-motion` del sistema operativo, pero mantiene los corazones activos por defecto para la mayoría de usuarios.
+
 ### Accesibilidad
 
-- **`prefers-reduced-motion`**: Las animaciones se desactivan automáticamente para usuarios con sensibilidad al movimiento o vértigo.
+- **`prefers-reduced-motion`**: Las animaciones problemáticas se desactivan automáticamente para usuarios con sensibilidad al movimiento o vértigo.
 - **Dimensiones en imágenes**: Todas las imágenes declaran `width` y `height` para prevenir layout shift (CLS).
 - **Contraste mejorado**: Color de texto secundario mejorado de `#55424d` a `#4a3644` para un ratio de contraste de 7:1.
-- **Navegación por teclado**: El reproductor de música es completamente navegable con teclado.
+- **Navegación por teclado**: El reproductor de música y el botón de accesibilidad son completamente navegables con teclado.
+- **Estados ARIA**: El botón de corazones utiliza `aria-pressed` para indicar su estado actual a los lectores de pantalla.
 
 ### Código limpio
 
@@ -58,6 +68,8 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 2. Abrir `index.html` en tu navegador
 
 3. Hacer clic en "Comenzar nuestra historia" para iniciar la experiencia
+
+4. Usar el botón de accesibilidad (esquina inferior derecha) para activar o desactivar los corazones flotantes
 
 ## 📁 Estructura del proyecto
 
@@ -102,6 +114,22 @@ Modifica las variables CSS en `:root`:
 }
 ```
 
+### Personalizar los corazones
+
+Para cambiar los emojis de los corazones flotantes, modifica el array `heartsItems` en el JavaScript:
+
+```javascript
+const heartsItems = ['❤️','💖','💕','💗','💓','💞'];
+// Agrega o elimina emojis según tu preferencia
+```
+
+Para ajustar la velocidad o frecuencia de los corazones:
+
+```javascript
+const FLOAT_ITEM_LIFETIME = 25000;  // Tiempo de vida en milisegundos
+const FLOAT_ITEM_INTERVAL = 1200;   // Intervalo entre corazones en milisegundos
+```
+
 ### Agregar más momentos
 
 Duplica un bloque `.memory-row` en el HTML y modifica:
@@ -111,6 +139,18 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - El año (`memory-footer-year`)
 
 ## 📋 Changelog
+
+### v1.2.0 (2026-09-18)
+
+**Nuevas funcionalidades:**
+- 💖 Restaurados corazones flotantes con animación suave
+- 🔘 Agregado botón de accesibilidad para activar/desactivar corazones
+- ⚙️ Implementado toggle inteligente con estados visuales ON/OFF
+- 🧹 Limpieza automática de corazones al desactivar
+
+**Correcciones:**
+- 🔧 Ajustado `prefers-reduced-motion` para no ocultar corazones por defecto
+- 🗣️ Actualizados textos de interfaz a español neutro
 
 ### v1.1.0 (2026-09-18)
 
@@ -122,7 +162,6 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - ♿ Agregado soporte `prefers-reduced-motion` para accesibilidad
 - 🖼️ Agregadas dimensiones a todas las imágenes para prevenir CLS
 - 🎨 Mejorado contraste de texto secundario para mejor legibilidad
-- 🗣️ Textos de interfaz actualizados a español neutro
 
 ### v1.0.0 (2026-09-18)
 
@@ -150,12 +189,14 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - Navegación completa por teclado
 - Soporte para usuarios con preferencias de movimiento reducido
 - Contraste de colores WCAG AA cumplido
+- Botón de toggle con estado accesible para lectores de pantalla
 
 ### Arquitectura del código
 
 - **CSS Custom Properties**: Fácil mantenimiento y theming
 - **Separación lógica**: CSS para estilos, HTML para estructura, JS para comportamiento
 - **Código autocontenido**: Sin dependencias externas, fácil de mantener
+- **Funciones modulares**: Código organizado en funciones reutilizables
 
 ## 📝 Licencia
 
