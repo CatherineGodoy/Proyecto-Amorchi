@@ -285,20 +285,26 @@
         transform: none !important;
         transition: none !important;
       }
-      .float-item {
-        animation: none !important;
-        display: none !important;
-      }
       .heart {
         animation: none !important;
       }
-      /* Mantener transiciones suaves en elementos interactivos */
-      .btn-start,
-      .btn-play,
-      .memory {
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-      }
     }
+
+    /* ===== BOTÓN DE ACCESIBILIDAD ===== */
+    .accessibility-toggle{
+      position:fixed;bottom:1.5rem;right:1.5rem;z-index:100;
+      display:flex;align-items:center;gap:.5rem;
+      background:var(--white);color:var(--accent-dark);
+      padding:.6rem 1rem;border-radius:999px;
+      border:1px solid rgba(214,51,132,.2);
+      box-shadow:var(--shadow);
+      font-family:var(--font-sans);font-size:.85rem;font-weight:600;
+      cursor:pointer;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .accessibility-toggle:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+    .accessibility-toggle svg{width:18px;height:18px}
+    .accessibility-toggle[aria-pressed="false"]{opacity:.7}
   </style>
 </head>
 <body>
@@ -441,6 +447,12 @@
       <p>Hecho con <span class="heart" aria-hidden="true">♥</span> para mi persona favorita</p>
       <p style="margin-top:.4rem;opacity:.8">14 años juntos • Desde Prontera, Ragnarok Online • Para siempre</p>
     </footer>
+
+    <!-- ===== BOTÓN DE ACCESIBILIDAD: CORAZONES ===== -->
+    <button class="accessibility-toggle" id="toggleHearts" aria-pressed="true" aria-label="Activar o desactivar corazones flotantes">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span id="toggleHeartsText">Corazones: ON</span>
+    </button>
   </main>
 
   <script>
@@ -459,21 +471,54 @@
     }, { threshold: .1, rootMargin: '0px 0px -50px 0px' });
     document.querySelectorAll('.section').forEach(s => observer.observe(s));
 
-    // Corazones flotantes
+    // Corazones flotantes con toggle de accesibilidad
     const container = document.querySelector('.float-prontera');
-    const items = ['❤️','💖','💕','💗','💓','💞'];
-    function spawnItem() {
-      if (document.hidden) return;
+    const heartsItems = ['❤️','💖','💕','💗','💓','💞'];
+    let heartsEnabled = true;
+    let heartsInterval = null;
+
+    function spawnHeart() {
+      if (!heartsEnabled || document.hidden) return;
       const el = document.createElement('span');
       el.className = 'float-item';
-      el.textContent = items[Math.floor(Math.random() * items.length)];
+      el.textContent = heartsItems[Math.floor(Math.random() * heartsItems.length)];
       el.style.left = Math.random() * 100 + 'vw';
       el.style.animationDuration = (Math.random() * 10 + 15) + 's';
       el.style.animationDelay = Math.random() * 3 + 's';
       container.appendChild(el);
       setTimeout(() => el.remove(), FLOAT_ITEM_LIFETIME);
     }
-    setInterval(spawnItem, FLOAT_ITEM_INTERVAL);
+
+    function startHearts() {
+      if (heartsInterval) clearInterval(heartsInterval);
+      heartsInterval = setInterval(spawnHeart, FLOAT_ITEM_INTERVAL);
+    }
+
+    function stopHearts() {
+      if (heartsInterval) clearInterval(heartsInterval);
+      heartsInterval = null;
+      // Limpiar corazones existentes
+      container.innerHTML = '';
+    }
+
+    // Iniciar corazones por defecto
+    startHearts();
+
+    // Botón de toggle para corazones
+    const toggleHeartsBtn = document.getElementById('toggleHearts');
+    const toggleHeartsText = document.getElementById('toggleHeartsText');
+
+    toggleHeartsBtn.addEventListener('click', () => {
+      heartsEnabled = !heartsEnabled;
+      toggleHeartsBtn.setAttribute('aria-pressed', heartsEnabled);
+      toggleHeartsText.textContent = heartsEnabled ? 'Corazones: ON' : 'Corazones: OFF';
+      
+      if (heartsEnabled) {
+        startHearts();
+      } else {
+        stopHearts();
+      }
+    });
 
     // Referencias del DOM y reproductor de música
     const btnPlay = document.getElementById('btnPlay');
