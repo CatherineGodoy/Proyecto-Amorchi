@@ -13,7 +13,7 @@
     :root{
       --bg:#fdf6f9;
       --ink:#20171c;          /* Texto principal más oscuro y definido */
-      --ink-muted:#55424d;    /* Texto secundario con más contraste */
+      --ink-muted:#4a3644;    /* Texto secundario con mejor contraste (7:1 ratio) */
       --accent:#d63384;
       --accent-dark:#9b1d55;
       --accent-light:#fce7f3;
@@ -276,6 +276,22 @@
         max-width: 100%;
       }
     }
+
+    /* ===== ACCESIBILIDAD ===== */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .section {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -322,10 +338,10 @@
       <div class="memories-container">
         <!-- FILA 1 -->
         <div class="memory-row">
-          <img src="ovejita.gif" alt="Ovejita decorativa" class="memory-pointer-gif">
+          <img src="ovejita.gif" alt="Ovejita decorativa" class="memory-pointer-gif" width="65" height="65">
           <article class="memory memory-photo">
             <div class="memory-img-wrapper">
-              <img src="foto1-primer-encuentro.jpg" alt="La primera vez que nos conocimos" loading="lazy">
+              <img src="foto1-primer-encuentro.jpg" alt="La primera vez que nos conocimos" loading="lazy" width="800" height="600">
             </div>
             <div class="memory-content-box">
               <h3>El primer encuentro</h3>
@@ -337,10 +353,10 @@
 
         <!-- FILA 2 -->
         <div class="memory-row">
-          <img src="ovejita.gif" alt="Ovejita decorativa" class="memory-pointer-gif">
+          <img src="ovejita.gif" alt="Ovejita decorativa" class="memory-pointer-gif" width="65" height="65">
           <article class="memory memory-photo">
             <div class="memory-img-wrapper">
-              <img src="foto2-momentos-felices.jpg" alt="Momentos felices juntos" loading="lazy">
+              <img src="foto2-momentos-felices.jpg" alt="Momentos felices juntos" loading="lazy" width="800" height="600">
             </div>
             <div class="memory-content-box">
               <h3>Nuestros momentos</h3>
@@ -352,10 +368,10 @@
 
         <!-- FILA 3 -->
         <div class="memory-row">
-          <img src="ovejita.gif" alt="Ovejita decorativa" class="memory-pointer-gif">
+          <img src="ovejita.gif" alt="Ovejita decorativa" class="memory-pointer-gif" width="65" height="65">
           <article class="memory memory-photo">
             <div class="memory-img-wrapper">
-              <img src="foto3-siempre-juntos.jpeg" alt="Siempre juntos a pesar de todo" loading="lazy">
+              <img src="foto3-siempre-juntos.jpeg" alt="Siempre juntos a pesar de todo" loading="lazy" width="800" height="600">
             </div>
             <div class="memory-content-box">
               <h3>Siempre juntos a pesar de todo</h3>
@@ -427,6 +443,10 @@
       artist: 'Ragnarok Online OST - SoundTeMP'
     };
 
+    // Constantes para efectos visuales
+    const FLOAT_ITEM_LIFETIME = 25000;
+    const FLOAT_ITEM_INTERVAL = 1200;
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: .1, rootMargin: '0px 0px -50px 0px' });
@@ -444,32 +464,11 @@
       el.style.animationDuration = (Math.random() * 10 + 15) + 's';
       el.style.animationDelay = Math.random() * 3 + 's';
       container.appendChild(el);
-      setTimeout(() => el.remove(), 25000);
+      setTimeout(() => el.remove(), FLOAT_ITEM_LIFETIME);
     }
-    setInterval(spawnItem, 1200);
+    setInterval(spawnItem, FLOAT_ITEM_INTERVAL);
 
-    const btnStart = document.getElementById('btnStart');
-    let experienceStarted = false;
-
-    function startExperience() {
-      if (experienceStarted) return;
-      experienceStarted = true;
-      btnStart.classList.add('hidden');
-      audio.play().catch(() => {
-        musicArtist.textContent = 'Hacé clic en ▶️ para reproducir';
-      });
-      document.querySelectorAll('.section').forEach(s => s.classList.add('visible'));
-    }
-
-    btnStart.addEventListener('click', startExperience);
-    btnStart.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startExperience(); }
-    });
-
-    const audio = new Audio();
-    audio.preload = 'metadata';
-    let isPlaying = false;
-
+    // Referencias del DOM y reproductor de música
     const btnPlay = document.getElementById('btnPlay');
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
@@ -478,9 +477,12 @@
     const musicTitle = document.getElementById('music-title');
     const musicArtist = document.getElementById('music-artist');
 
+    const audio = new Audio();
+    audio.preload = 'metadata';
     audio.src = MUSIC_CONFIG.src;
     musicTitle.textContent = MUSIC_CONFIG.title;
     musicArtist.textContent = MUSIC_CONFIG.artist;
+    let isPlaying = false;
 
     audio.addEventListener('loadedmetadata', () => {
       durationEl.textContent = formatTime(audio.duration);
@@ -504,7 +506,7 @@
     });
 
     audio.addEventListener('error', () => {
-      musicArtist.textContent = 'No se pudo cargar. Verificá el enlace en MUSIC_CONFIG.src';
+      musicArtist.textContent = 'No se pudo cargar. Verifique el enlace en MUSIC_CONFIG.src';
       musicArtist.style.color = 'var(--accent-dark)';
     });
 
@@ -515,6 +517,25 @@
       return `${m}:${s}`;
     }
 
+    // Inicio de la experiencia
+    const btnStart = document.getElementById('btnStart');
+    let experienceStarted = false;
+
+    function startExperience() {
+      if (experienceStarted) return;
+      experienceStarted = true;
+      btnStart.classList.add('hidden');
+      audio.play().catch(() => {
+        musicArtist.textContent = 'Haga clic en ▶️ para reproducir';
+      });
+      document.querySelectorAll('.section').forEach(s => s.classList.add('visible'));
+    }
+
+    btnStart.addEventListener('click', startExperience);
+    btnStart.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startExperience(); }
+    });
+
     function togglePlay() {
       if (isPlaying) {
         audio.pause();
@@ -523,7 +544,7 @@
         btnPlay.setAttribute('aria-label', 'Reproducir');
       } else {
         audio.play().catch(() => {
-          musicArtist.textContent = 'Hacé clic en play para permitir la reproducción';
+          musicArtist.textContent = 'Haga clic en play para permitir la reproducción';
         });
         btnPlay.classList.add('playing');
         btnPlay.setAttribute('aria-pressed', 'true');
