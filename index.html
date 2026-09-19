@@ -279,17 +279,24 @@
 
     /* ===== ACCESIBILIDAD ===== */
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
+      /* Desactivar animaciones que pueden causar incomodidad */
       .section {
         opacity: 1 !important;
         transform: none !important;
+        transition: none !important;
+      }
+      .float-item {
+        animation: none !important;
+        display: none !important;
+      }
+      .heart {
+        animation: none !important;
+      }
+      /* Mantener transiciones suaves en elementos interactivos */
+      .btn-start,
+      .btn-play,
+      .memory {
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
       }
     }
   </style>
