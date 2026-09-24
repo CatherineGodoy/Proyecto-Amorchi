@@ -20,8 +20,18 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 | 📱 **Diseño responsive** | Se adapta a móviles, tabletas y escritorio |
 | ♿ **Accesibilidad** | Cumple estándares WCAG con soporte para `prefers-reduced-motion` |
 | 🎭 **Animaciones suaves** | Transiciones con IntersectionObserver para aparición progresiva |
+| ⏱️ **Contador de tiempo juntos** | Reloj en vivo con días, horas, minutos y segundos desde el 15 de octubre de 2013 |
+| 📊 **Barra de progreso de scroll** | Indicador visual en la parte superior que muestra cuánto se ha recorrido la página |
+| 💞 **Separadores decorativos** | Líneas con corazón entre secciones para dar ritmo a la lectura |
 
 ## 🔧 Mejoras implementadas
+
+### Fase 1 — Interacción y ritmo visual
+
+- **Contador de tiempo juntos**: Cuatro tarjetas en vivo (días, horas, minutos, segundos) que calculan la diferencia real contra `TOGETHER_SINCE`. Se alinea al borde de cada segundo para evitar deriva y resincroniza al volver a la pestaña, ya que los timers se throtelan en segundo plano. Usa `font-variant-numeric: tabular-nums` para que el layout no salte cada segundo.
+- **Barra de progreso de scroll**: Fija en la parte superior, se actualiza dentro de `requestAnimationFrame` con listeners `passive` para no bloquear el scroll. Es decorativa (`aria-hidden`) y desaparece al llegar al final.
+- **Separadores decorativos**: Líneas con degradado y un corazón central entre las secciones. Comparten la clase `.section` para heredar la misma animación de aparición.
+- **`prefers-reduced-motion` ampliado**: Además de las secciones, ahora desactiva corazones flotantes, el GIF de la ovejita, los efectos hover de tarjetas y botones, y la transición de la barra de scroll.
 
 ### Corrección de errores críticos
 
@@ -82,7 +92,8 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 ├── bubu-dudu.gif                 # GIF de la pareja
 ├── foto1-primer-encuentro.jpg    # Foto del primer encuentro (2013)
 ├── foto2-momentos-felices.jpg    # Foto de momentos felices (2019)
-└── foto3-siempre-juntos.jpeg     # Foto de siempre juntos (2025)
+├── foto3-siempre-juntos.jpeg     # Foto de siempre juntos (2025)
+└── odd/tasks/                    # Documento de seguimiento de mejoras
 ```
 
 ## 🎨 Personalización
@@ -98,6 +109,17 @@ const MUSIC_CONFIG = {
   artist: 'Artista'               // Nombre del artista
 };
 ```
+
+### Cambiar la fecha del contador
+
+Edita la constante `TOGETHER_SINCE` en el `<script>`. El mes se indexa **desde 0**: enero es `0`, octubre es `9`.
+
+```javascript
+// Formato: new Date(año, mes - 1, día, hora, minuto, segundo)
+const TOGETHER_SINCE = new Date(2013, 9, 15, 0, 0, 0); // 15 de octubre de 2013
+```
+
+El texto visible `Desde el 15 de octubre de 2013` está en el HTML y hay que actualizarlo a mano si cambia la fecha.
 
 ### Cambiar los colores
 
@@ -139,6 +161,17 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - El año (`memory-footer-year`)
 
 ## 📋 Changelog
+
+### v1.3.0 (2026-09-24)
+
+**Nuevas funcionalidades:**
+- ⏱️ Contador en vivo de tiempo juntos (días, horas, minutos, segundos) desde el 15/10/2013
+- 📊 Barra de progreso de scroll fija en la parte superior
+- 💞 Separadores decorativos con corazón entre secciones
+
+**Mejoras:**
+- ♿ `prefers-reduced-motion` ahora también desactiva corazones, GIF, hovers y la barra de scroll
+- ⚙️ Relojeo del contador sin deriva y resincronización al recuperar la pestaña
 
 ### v1.2.0 (2026-09-18)
 
