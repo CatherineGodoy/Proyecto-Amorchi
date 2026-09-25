@@ -103,7 +103,8 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T6 | ✅ Hecha | `--mx`/`--my` seteados por `pointermove` (69.99% / 20% medido); listener no se adjunta bajo `prefers-reduced-motion` |
 | T7–T12 | ⏳ Pendiente | Fases 3-4 |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
-| T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` docs — los 3 en `origin/main` |
+| T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` + `eb7359c` docs (Fase 1) · `3478998` feat (Fase 2) — los 5 en `origin/main` |
+| T15 | ✅ Hecha | Ovejita: `ovejaVuelta` autónoma + `ovejaSalto` al clic, sin colisión con foto/título/tarjeta — 39/39 PASS en 3 anchos |
 
 ### Verificación ejecutada (Fase 1)
 
@@ -161,6 +162,62 @@ todo el viewport (medido: RGB constante en el borde izquierdo de arriba a abajo)
    rehizo con `--dump-dom` (texto) y muestreo de píxeles con `System.Drawing`, que no
    envejecen.
 
+### Pedido puntual (T15) — Ovejita de la galería
+
+Pedido de la usuaria el 25/09/2026: en Ragnarok Online la ovejita de clase Genetic se
+movía sola en su pantalla y además se podía arrastrar. Quería que la de la página se
+moviera **sola**, pero **por donde está** y sin interferir con la foto.
+
+**Decisión:** de las tres opciones ofrecidas se aceptó la 2 — camino cerrado tipo elipse
+dentro del propio hueco. Descartadas: una sola ovejita recorriendo toda la galería,
+órbita con `<span>` contenedor, y giro en el lugar sin desplazamiento. Después la usuaria
+preguntó "¿y si se mueve al hacer clic?" → se implementó **ambas** (autónoma + reacción)
+en lugar de reemplazar: solo-click habría dejado el ítem quieto casi siempre y nadie habría
+descubierto que era clicable.
+
+**Implementación:**
+
+- `pointer-events: none` → `cursor: pointer` + `user-select: none` (ahora es clicable a propósito).
+- `@keyframes ovejaVuelta` (4s, bucle): elipse de 24×7px centrada en `(0, -1.5px)` para que
+  trepe más de lo que baja. En escritorio el hueco de la fila da 24px; en móvil la fila pasa a
+  columna con `gap .8rem` y `margin-bottom:-5px`, o sea 7.8px de holgura, y el recorrido nunca
+  baja de `-5px`, así que la separación mínima medida queda en 4.4px.
+- `@keyframes ovejaSalto` (700ms, `linear`): giro completo (`-6deg` → `354deg`) y salto de hasta
+  17px hacia arriba. Termina en `translate(0,-5px) rotate(-6deg) scale(1)`, que es exactamente el
+  `0%` de `ovejaVuelta`, así que el retome es invisible.
+- Arriba hay **40px libres** en las tres filas: `margin-bottom: 2.5rem` del título en la fila 1 y
+  `gap: 2.5rem` entre filas en las otras dos — por eso el salto solo trepa y nunca baja.
+- `.oveja-gira` toma el `animation-name` durante 700ms y lo suelta con `animationend`. Se suma un
+  `setTimeout` de 750ms como respaldo: si `animationend` no llega (pestaña en background, o
+  `prefers-reduced-motion` activado a mitad de vuelta) la clase quedaría puesta y la ovejita se
+  clavaría quieta para siempre.
+- Bajo `prefers-reduced-motion` no se adjunta el listener y el CSS pone `cursor: default`, para
+  no prometer un clic que no haría nada.
+
+**Verificación (T15):**
+
+**Estructural:** `lineas: 1125` · `node --check: OK` · etiquetas balanceadas ·
+`braces CSS: 150/150` · keyframes `ovejaVuelta` + `ovejaSalto` · `floatOveja: 0` residuales.
+
+**Funcional (headless Edge `--dump-dom`, 39 aserciones en 3 anchos):**
+
+```
+39 PASS / 0 FAIL        escritorio 1280 · tablet 768 · celular 390
+A  animation-name=ovejaVuelta · pointer-events=auto · cursor=pointer · 3 ovejitas
+   se mueve sola · recorrido X 23/23/23px · recorrido Y 7/7/7px
+B  clase aplicada → animationName=ovejaSalto · duration=0.7s
+   termina sola (clase retirada) → vuelve a animationName=ovejaVuelta
+   NUNCA choca con foto/título/tarjeta (rectángulos sin intersección en todas las muestras)
+```
+
+**Tres errores del propio test, no del producto:** (a) medí el recorrido juntando los centros
+de las tres ovejitas en un solo min/max — están en filas distintas, por eso daba 760px y 1196px,
+y el rango se midió después por ovejita; (b) mi override del test forzaba la animación con
+`!important` y pisaba `.oveja-gira`, dejando el `animationName` en `ovejaVuelta`; (c) `NodeList`
+no tiene `.concat`. Los tres se corrigieron quitando el bloque
+`@media (prefers-reduced-motion: reduce)` de la copia de prueba, con lo que la verificación corre
+por la misma ruta de CSS que ve un usuario normal.
+
 ### ✅ Discrepancia resuelta (ya no bloquea nada)
 
 La usuaria confirmó el origen de las dos cifras:
@@ -175,8 +232,9 @@ conversación (y 13 desde la fecha oficial). Faltan 21 días desde el 24/09/2026
 **Siguiente paso:** Fase 3 (T7 parallax, T8 línea de tiempo, T9 sello en la carta).
 
 **Líneas autorizadas:** Fase 1 cerró en 631 → 801 (**+170**). Fase 2 cerró en 801 → 1066
-(**+265**). Acumulado de la feature: **+435** sobre las ~400 que eran la referencia de
-planificación. No se parte la entrega: lightbox, volumen y brillo son tres comportamientos
+(**+265**). T15 cerró en 1066 → 1125 (**+59**). Acumulado de la feature: **+494** sobre las
+~400 que eran la referencia de planificación. No se parte la entrega: lightbox, volumen, brillo
+y ovejita son comportamientos
 coherentes y la corrección natural los incluye; además la entrega es commit directo en
 `main` sin PR, así que no hay puerta de tamaño que salte. Se registra el sobrepaso para que
 las fases 3 y 4 se planifiquen con margen.

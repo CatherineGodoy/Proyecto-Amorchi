@@ -169,11 +169,44 @@
       flex-shrink: 0;
       image-rendering: pixelated;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,.1));
-      animation: floatOveja 3s ease-in-out infinite;
+      /* Clicable a proposito: el click dispara ovejaSalto. Nunca solapa la
+         foto (verificado en escritorio/tablet/celular), asi que el lightbox
+         sigue recibiendo su propio clic. */
+      cursor: pointer;
+      user-select: none;
+      /* Da vueltitas en el sitio. Eliptica 24x7px descentrada hacia arriba:
+         en escritorio vive dentro del hueco (gap 1.5rem = 24px) y en movil
+         deja >= 3px sobre la foto, que arranca con -5px de margen. */
+      animation: ovejaVuelta 4s linear infinite;
     }
-    @keyframes floatOveja {
-      0%,100%{transform:translateY(0)}
-      50%{transform:translateY(-5px)}
+    /* Reaccion al click: toma el transform 700ms y lo devuelve sin salto,
+       porque ovejaSalto termina exactamente donde arranca ovejaVuelta. */
+    .memory-pointer-gif.oveja-gira {
+      animation-name: ovejaSalto;
+      animation-duration: .7s;
+      animation-timing-function: linear;
+      animation-iteration-count: 1;
+    }
+    @keyframes ovejaVuelta {
+      0%    { transform: translate(0, -5px)        rotate(-6deg) }
+      12.5% { transform: translate(8.5px, -4px)    rotate(-4deg) }
+      25%   { transform: translate(12px, -1.5px)   rotate(0deg) }
+      37.5% { transform: translate(8.5px, 1px)     rotate(4deg) }
+      50%   { transform: translate(0, 2px)         rotate(6deg) }
+      62.5% { transform: translate(-8.5px, 1px)    rotate(4deg) }
+      75%   { transform: translate(-12px, -1.5px)  rotate(0deg) }
+      87.5% { transform: translate(-8.5px, -4px)   rotate(-4deg) }
+      100%  { transform: translate(0, -5px)        rotate(-6deg) }
+    }
+    /* Vueltita al hacer click: gira 360 grados y da un salto hacia arriba.
+       Solo trepa (nunca baja de -5px), y ahi arriba hay 40px libres: el
+       titulo y el gap entre filas. */
+    @keyframes ovejaSalto {
+      0%   { transform: translate(0, -5px)      rotate(-6deg)  scale(1) }
+      25%  { transform: translate(7px, -14px)   rotate(84deg)  scale(1.1) }
+      50%  { transform: translate(0, -17px)     rotate(174deg) scale(1.15) }
+      75%  { transform: translate(-7px, -14px)  rotate(264deg) scale(1.1) }
+      100% { transform: translate(0, -5px)      rotate(354deg) scale(1) }
     }
 
     .memory {
@@ -446,6 +479,8 @@
       }
       .memory-pointer-gif {
         animation: none !important;
+        /* Sin animacion no hay reaccion posible: no prometemos el click */
+        cursor: default !important;
       }
       .memory,
       .memory:hover,
@@ -1052,6 +1087,30 @@
         const rect = letterEl.getBoundingClientRect();
         letterEl.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
         letterEl.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+      });
+    }
+
+    // ===== Ovejita: reaccion al click =====
+    // ovejaSalto toma el transform durante 700ms y termina exactamente en el
+    // 0% de ovejaVuelta, asi que al soltarla la vuelta al sitio sigue sin
+    // salto. Con movimiento reducido no se adjunta nada (el CSS ya la fija).
+    if (!motionQuery.matches) {
+      document.querySelectorAll('.memory-pointer-gif').forEach(oveja => {
+        let timer;
+        const soltar = () => oveja.classList.remove('oveja-gira');
+        oveja.addEventListener('animationend', e => {
+          if (e.animationName === 'ovejaSalto') soltar();
+        });
+        oveja.addEventListener('click', () => {
+          oveja.classList.remove('oveja-gira');
+          void oveja.offsetWidth; // reflow: reinicia si ya estaba reaccionando
+          oveja.classList.add('oveja-gira');
+          // Respaldo: si animationend no llega (pestaña en background o
+          // movimiento reducido activado a mitad de vuelta) la ovejita no
+          // puede quedarse clavada en ovejaSalto, que dejaria de moverse.
+          clearTimeout(timer);
+          timer = setTimeout(soltar, 750);
+        });
       });
     }
 

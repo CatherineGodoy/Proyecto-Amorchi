@@ -26,6 +26,7 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 | 🔍 **Lightbox de fotos** | Vista ampliada de las fotos de la galería con navegación y teclado completo |
 | 🔊 **Control de volumen** | Slider de volumen y botón de silenciar que recuerda el último nivel |
 | ✨ **Brillo de la carta** | Resplandor que sigue al cursor sobre la carta final |
+| 🐑 **Ovejita viva** | La ovejita de cada tarjeta deambula sola y reacciona con una vueltita al hacer clic |
 
 ## 🔧 Mejoras implementadas
 
@@ -42,6 +43,14 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 - **Control de volumen**: Slider de volumen con relleno `--fill` y botón de silenciar que conmuta entre el último nivel y cero. El volumen se guarda en `lastVolume` solo cuando es distinto de cero, así que silenciar y volver nunca pierde el nivel anterior. `aria-pressed` y el texto accesible cambian con el estado.
 - **Brillo de la carta**: Un resplandor radial sigue al cursor sobre la carta final usando las custom properties `--mx`/`--my`. El listener solo se adjunta si el usuario no pidió movimiento reducido: en ese caso el brillo queda en su posición estática.
 - **`.gitignore`**: Ahora ignora `.atl/` para que los metadatos de las herramientas de asistencia no entren al repositorio.
+
+### Pulido — Ovejita de la galería
+
+- **Deambula sola**: Cada ovejita recorre una elipse de 24×7px descentrada hacia arriba (`@keyframes ovejaVuelta`, 4s en bucle) en lugar de quedarse quieta. El recorrido cabe entero en el hueco de la fila (24px en escritorio) y en móvil deja más de 4px sobre la foto, así que nunca la toca.
+- **Reacciona al clic**: Gira 360° y da un salto hacia arriba (`@keyframes ovejaSalto`, 700ms). Termina exactamente donde arranca `ovejaVuelta`, así que la vuelta al sitio continúa sin salto. Solo trepa, y arriba hay 40px libres: el título y el gap entre filas.
+- **Sin interferencia con la foto**: Se quitó `pointer-events: none` para poder clickearla. Se verificó en escritorio, tablet y celular que su rectángulo nunca se cruza con ninguna foto, el título ni las tarjetas, así que el lightbox sigue recibiendo su propio clic.
+- **Fallo seguro**: si `animationend` no llega (pestaña en background o movimiento reducido activado a mitad de vuelta), un `setTimeout` de 750ms la suelta para que no se quede clavada.
+- **`prefers-reduced-motion`**: sin animación no hay reacción posible, así que el bloque también pone el cursor en `default` para no prometer un clic que no haría nada.
 
 ### Corrección de errores críticos
 
@@ -171,6 +180,19 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - El año (`memory-footer-year`)
 
 ## 📋 Changelog
+
+### v1.4.1 (2026-09-25)
+
+**Nuevas funcionalidades:**
+- 🐑 Ovejita de la galería que deambula sola en una elipse de 24×7px y reacciona al clic con una vueltita de 360° y salto
+
+**Mejoras:**
+- 🎯 `cursor: pointer` como señal de que la ovejita es clicable, y `cursor: default` bajo `prefers-reduced-motion`
+- 🛡️ Respaldo por `setTimeout` para que la ovejita nunca quede trabada en la animación de clic
+
+**Verificación:**
+- ✅ 39 aserciones funcionales en navegador (escritorio 1280, tablet 768 y celular 390): movimiento autónomo, rango 23×7px, clic → `ovejaSalto` → vuelta a `ovejaVuelta`, y cero colisiones con foto, título o tarjeta
+- ✅ `node --check` sobre el JS extraído, etiquetas balanceadas y llaves CSS 150/150
 
 ### v1.4.0 (2026-09-25)
 
