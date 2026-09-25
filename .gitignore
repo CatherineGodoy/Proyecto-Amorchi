@@ -28,3 +28,6 @@ node_modules/
 # Build output (if you add a build system)
 dist/
 build/
+
+# Metadata de herramientas del asistente (no es código del proyecto)
+.atl/

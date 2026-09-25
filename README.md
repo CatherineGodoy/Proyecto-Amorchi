@@ -23,6 +23,9 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 | ⏱️ **Contador de tiempo juntos** | Reloj en vivo con días, horas, minutos y segundos desde el 15 de octubre de 2013 |
 | 📊 **Barra de progreso de scroll** | Indicador visual en la parte superior que muestra cuánto se ha recorrido la página |
 | 💞 **Separadores decorativos** | Líneas con corazón entre secciones para dar ritmo a la lectura |
+| 🔍 **Lightbox de fotos** | Vista ampliada de las fotos de la galería con navegación y teclado completo |
+| 🔊 **Control de volumen** | Slider de volumen y botón de silenciar que recuerda el último nivel |
+| ✨ **Brillo de la carta** | Resplandor que sigue al cursor sobre la carta final |
 
 ## 🔧 Mejoras implementadas
 
@@ -32,6 +35,13 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 - **Barra de progreso de scroll**: Fija en la parte superior, se actualiza dentro de `requestAnimationFrame` con listeners `passive` para no bloquear el scroll. Es decorativa (`aria-hidden`) y desaparece al llegar al final.
 - **Separadores decorativos**: Líneas con degradado y un corazón central entre las secciones. Comparten la clase `.section` para heredar la misma animación de aparición.
 - **`prefers-reduced-motion` ampliado**: Además de las secciones, ahora desactiva corazones flotantes, el GIF de la ovejita, los efectos hover de tarjetas y botones, y la transición de la barra de scroll.
+
+### Fase 2 — Táctil, sonido y detalle
+
+- **Lightbox de fotos**: Cada foto de la galería es ahora un `<button>` real, así que se abre con teclado y lector de pantalla. Al abrir, el foco salta al botón de cerrar, el fondo queda bloqueado y al salir el foco vuelve a la foto que lo abrió. `Escape` cierra, las flechas navegan con wrap-around, `Tab` queda atrapado dentro de los tres botones y un clic en el fondo también cierra. En móvil los botones de navegación bajan al pie de la foto.
+- **Control de volumen**: Slider de volumen con relleno `--fill` y botón de silenciar que conmuta entre el último nivel y cero. El volumen se guarda en `lastVolume` solo cuando es distinto de cero, así que silenciar y volver nunca pierde el nivel anterior. `aria-pressed` y el texto accesible cambian con el estado.
+- **Brillo de la carta**: Un resplandor radial sigue al cursor sobre la carta final usando las custom properties `--mx`/`--my`. El listener solo se adjunta si el usuario no pidió movimiento reducido: en ese caso el brillo queda en su posición estática.
+- **`.gitignore`**: Ahora ignora `.atl/` para que los metadatos de las herramientas de asistencia no entren al repositorio.
 
 ### Corrección de errores críticos
 
@@ -161,6 +171,22 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - El año (`memory-footer-year`)
 
 ## 📋 Changelog
+
+### v1.4.0 (2026-09-25)
+
+**Nuevas funcionalidades:**
+- 🔍 Lightbox de fotos con navegación por teclado, trampa de foco, bloqueo del scroll y devolución del foco al abrir
+- 🔊 Slider de volumen con relleno visual y botón de silenciar que recuerda el último nivel
+- ✨ Brillo radial en la carta final que sigue al cursor
+
+**Mejoras:**
+- ♿ Las fotos de la galería pasaron de `<div>` a `<button>`, lo que las hace accionables con teclado y visibles para lectores de pantalla
+- 🎯 `aria-label`, `aria-pressed` y `title` del control de volumen actualizados según el estado
+- 🧰 `.gitignore` ahora excluye `.atl/`
+
+**Verificación:**
+- ✅ 26 aserciones funcionales en navegador (apertura, foco, teclado, wrap-around, volumen, glow)
+- ✅ `node --check` sobre el JS extraído, etiquetas balanceadas y llaves CSS 136/136
 
 ### v1.3.0 (2026-09-24)
 

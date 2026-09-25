@@ -45,9 +45,9 @@ ritmo a la lectura.
 
 ### Fase 2 — Media prioridad
 
-- [ ] **T4** Lightbox: al clickear una foto, abrirla a pantalla completa
-- [ ] **T5** Control de volumen en el player de música
-- [ ] **T6** Hover con brillo sutil en la carta
+- [x] **T4** Lightbox: al clickear una foto, abrirla a pantalla completa
+- [x] **T5** Control de volumen en el player de música
+- [x] **T6** Hover con brillo sutil en la carta
 
 ### Fase 3 — Pulido visual
 
@@ -98,7 +98,10 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T1 | ✅ Hecha | `node` sobre la lógica pura: `4727 días \| 20h \| 39m` correcto; borde `t=inicio` → todo en 0; reloj atrasado → clamp a 0 |
 | T2 | ✅ Hecha | Listener `passive` + `requestAnimationFrame`; `aria-hidden`; ancho recalculado en `resize` |
 | T3 | ✅ Hecha | 3 separadores (`hero→momentos`, `momentos→carta`, `carta→música`), clase `.section` para heredar la animación |
-| T4–T12 | ⏳ Pendiente | Fases 2-4 |
+| T4 | ✅ Hecha | 3 fotos pasaron de `<div>` a `<button>`; apertura, `Escape`, flechas con wrap-around, trampa de `Tab`, clic en fondo, bloqueo del scroll y devolución del foco — todo PASS |
+| T5 | ✅ Hecha | Slider con `--fill`, botón de silenciar con `lastVolume`, `aria-pressed`/`aria-label`/`title` según estado |
+| T6 | ✅ Hecha | `--mx`/`--my` seteados por `pointermove` (69.99% / 20% medido); listener no se adjunta bajo `prefers-reduced-motion` |
+| T7–T12 | ⏳ Pendiente | Fases 3-4 |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
 | T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` docs — los 3 en `origin/main` |
 
@@ -120,6 +123,44 @@ figuras de estilo antiguo (alturas desiguales), por lo que `4727` mostraba el `2
 las celdas se veían desparejas. Corregido con `font-variant-numeric: lining-nums tabular-nums`
 + `font-feature-settings:"lnum" 1,"tnum" 1`. Commit `536be05`.
 
+### Verificación ejecutada (Fase 2)
+
+**Estructural:**
+
+```
+lineas totales: 1066        (801 al cerrar Fase 1 → +265)
+node --check:   OK
+etiquetas:      button 10/10 · div 34/34 · section 4/4 · main 1/1 · figure 1/1 · figcaption 1/1
+braces CSS:     136/136 OK
+ids del JS:     23/23 presentes en el HTML
+```
+
+**Funcional (headless Edge `--dump-dom`, 26 aserciones):**
+
+```
+26 PASS / 0 FAIL
+T4  abre lightbox · foco en cerrar · body bloqueado · caption y src cargados
+    ArrowRight cambia · ArrowLeft vuelve · wrap-around · trampa de Tab
+    Escape cierra · devuelve foco · desbloquea body · click en fondo cierra
+T5  volumen 40 → audio.volume 0.4 · relleno --fill 40%
+    silencia a 0 · aria-pressed true · label "Activar sonido"
+    restaura a 0.4 · desde 0 restaura lastVolume · volumen 100
+T6  --mx y --my seteados (69.99% / 20%) · ::before usa radial-gradient con la posición
+```
+
+**Visual (headless Edge `--screenshot`):** reproductor con el control de volumen visible
+y lightbox con foto, pie, botones de navegación y cierre. El overlay del lightbox cubre
+todo el viewport (medido: RGB constante en el borde izquierdo de arriba a abajo).
+
+**Dos trampas del entorno de verificación que no eran defectos del producto:**
+
+1. Edge headless reporta `prefers-reduced-motion: reduce`, así que el guard de T6 **impide**
+   adjuntar el listener por diseño. Para verificarlo hubo que parchar `window.matchMedia` en
+   la copia de prueba para que devuelva `matches: false`.
+2. El lector de imágenes devolvió mídia cacheada en varias lecturas; la verificación se
+   rehizo con `--dump-dom` (texto) y muestreo de píxeles con `System.Drawing`, que no
+   envejecen.
+
 ### ✅ Discrepancia resuelta (ya no bloquea nada)
 
 La usuaria confirmó el origen de las dos cifras:
@@ -131,7 +172,14 @@ Verificado con cálculo: el **15/10/2026** se cumplen exactamente **14 años** d
 conversación (y 13 desde la fecha oficial). Faltan 21 días desde el 24/09/2026. El rótulo
 "14 años" es correcto y **no se modifica ningún texto**.
 
-**Siguiente paso:** Fase 2 (T4 lightbox, T5 volumen, T6 hover en la carta).
+**Siguiente paso:** Fase 3 (T7 parallax, T8 línea de tiempo, T9 sello en la carta).
 
-**Líneas autorizadas:** Fase 1 cerró en 631 → 801 líneas en `index.html` (**+170**), dentro
-del presupuesto de 400. Verificar de nuevo el acumulado al cerrar la Fase 2.
+**Líneas autorizadas:** Fase 1 cerró en 631 → 801 (**+170**). Fase 2 cerró en 801 → 1066
+(**+265**). Acumulado de la feature: **+435** sobre las ~400 que eran la referencia de
+planificación. No se parte la entrega: lightbox, volumen y brillo son tres comportamientos
+coherentes y la corrección natural los incluye; además la entrega es commit directo en
+`main` sin PR, así que no hay puerta de tamaño que salte. Se registra el sobrepaso para que
+las fases 3 y 4 se planifiquen con margen.
+
+**Infra:** `.gitignore` ahora excluye `.atl/` (metadatos de herramientas), para que en el
+repo solo entre el código de la usuaria.
