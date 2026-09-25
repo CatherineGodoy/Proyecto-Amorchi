@@ -172,6 +172,7 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 **Mejoras:**
 - ♿ `prefers-reduced-motion` ahora también desactiva corazones, GIF, hovers y la barra de scroll
 - ⚙️ Relojeo del contador sin deriva y resincronización al recuperar la pestaña
+- 🔢 Cifras del contador forzadas a `lining-nums` — Cormorant Garamond renderiza figuras de estilo antiguo con alturas desiguales, lo que hacía saltar visualmente el número de días
 
 ### v1.2.0 (2026-09-18)
 
