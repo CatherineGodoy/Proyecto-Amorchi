@@ -63,8 +63,8 @@ ritmo a la lectura.
 
 ### Cierre
 
-- [ ] **T13** README actualizado
-- [ ] **T14** Commit de trabajo por unidad terminada
+- [x] **T13** README actualizado
+- [x] **T14** Commit de trabajo por unidad terminada
 
 ## Criterios de aceptación
 
@@ -100,7 +100,7 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T3 | ✅ Hecha | 3 separadores (`hero→momentos`, `momentos→carta`, `carta→música`), clase `.section` para heredar la animación |
 | T4–T12 | ⏳ Pendiente | Fases 2-4 |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
-| T14 | ⏳ Pendiente | Commit de la Fase 1 |
+| T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` docs — los 3 en `origin/main` |
 
 ### Verificación ejecutada (Fase 1)
 
