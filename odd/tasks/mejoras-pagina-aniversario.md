@@ -66,12 +66,18 @@ ritmo a la lectura.
 - [x] **T13** README actualizado
 - [x] **T14** Commit de trabajo por unidad terminada
 
+### Pedidos puntuales
+
+- [x] **T15** Ovejita de la galería: que se mueva sola y además reaccione al clic
+- [x] **T16** Interruptor general de animaciones (reemplaza el bloque `prefers-reduced-motion`)
+
 ## Criterios de aceptación
 
 1. La página carga sin errores de consola en navegador de escritorio y móvil.
 2. El contador avanza en tiempo real y sobrevive a cambiar de pestaña.
 3. La barra de scroll refleja el progreso real y desaparece al 100%.
-4. Las secciones siguen apareciendo con la animación existente y se muestran completas con `prefers-reduced-motion`.
+4. Las secciones siguen apareciendo con la animación existente, y con las animaciones apagadas
+   (vía sistema o vía botón) se muestran **completas** — nunca queda contenido oculto.
 5. Todo el texto visible sigue en español neutro.
 
 ## Verificación
@@ -100,11 +106,12 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T3 | ✅ Hecha | 3 separadores (`hero→momentos`, `momentos→carta`, `carta→música`), clase `.section` para heredar la animación |
 | T4 | ✅ Hecha | 3 fotos pasaron de `<div>` a `<button>`; apertura, `Escape`, flechas con wrap-around, trampa de `Tab`, clic en fondo, bloqueo del scroll y devolución del foco — todo PASS |
 | T5 | ✅ Hecha | Slider con `--fill`, botón de silenciar con `lastVolume`, `aria-pressed`/`aria-label`/`title` según estado |
-| T6 | ✅ Hecha | `--mx`/`--my` seteados por `pointermove` (69.99% / 20% medido); listener no se adjunta bajo `prefers-reduced-motion` |
+| T6 | ✅ Hecha | `--mx`/`--my` seteados por `pointermove` (69.99% / 20% medido); el listener está siempre adjunto y consulta `animacionesEncendidas()` (antes se condicionaba a `prefers-reduced-motion` al cargar) |
 | T7–T12 | ⏳ Pendiente | Fases 3-4 |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
 | T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` + `eb7359c` docs (Fase 1) · `3478998` feat (Fase 2) — los 5 en `origin/main` |
 | T15 | ✅ Hecha | Ovejita: `ovejaVuelta` autónoma + `ovejaSalto` al clic, sin colisión con foto/título/tarjeta — 39/39 PASS en 3 anchos |
+| T16 | ✅ Hecha | Interruptor general de animaciones: clase `anim-off` en `<html>` reemplaza a `@media (prefers-reduced-motion)`, decisión en `<head>` sin parpadeo, elección en `localStorage` — 35/35 PASS en 2 corridas |
 
 ### Verificación ejecutada (Fase 1)
 
@@ -191,8 +198,8 @@ descubierto que era clicable.
   `setTimeout` de 750ms como respaldo: si `animationend` no llega (pestaña en background, o
   `prefers-reduced-motion` activado a mitad de vuelta) la clase quedaría puesta y la ovejita se
   clavaría quieta para siempre.
-- Bajo `prefers-reduced-motion` no se adjunta el listener y el CSS pone `cursor: default`, para
-  no prometer un clic que no haría nada.
+- Con las animaciones apagadas el CSS pone `cursor: default` y el listener consulta
+  `animacionesEncendidas()` al vuelo, para no prometer un clic que no haría nada.
 
 **Verificación (T15):**
 
@@ -218,6 +225,81 @@ no tiene `.concat`. Los tres se corrigieron quitando el bloque
 `@media (prefers-reduced-motion: reduce)` de la copia de prueba, con lo que la verificación corre
 por la misma ruta de CSS que ve un usuario normal.
 
+### Pedido puntual (T16) — Interruptor general de animaciones
+
+**El problema, en dos partes:**
+
+1. **Un bug real.** El botón decía `Corazones: ON` mientras `prefers-reduced-motion` escondía
+   todo con `display: none !important` — o sea, un control que miente sobre su propio estado.
+2. **Un hallazgo del entorno.** La usuaria reportó que la ovejita no se movía. Verificado: su
+   Windows 11 (build 26200) tiene **Configuración → Accesibilidad → Efectos visuales →
+   Efectos de animaciones** desactivado, lo que hace que `matchMedia('(prefers-reduced-motion:
+   reduce)')` devuelva `true` y por lo tanto se active el bloque completo de reposo.
+
+**Decisión (aceptada por la usuaria):** convertir el toggle de corazones en un **interruptor
+general de animaciones** que arranca según el sistema pero que el usuario puede pisar, con la
+elección persistida. Ventaja sobre solo documentar el path de Windows: el regalo se controla
+desde la propia página, sin depender de una configuración del SO.
+
+**Implementación:**
+
+- **Una sola fuente de verdad:** la clase `html.anim-off`. El bloque
+  `@media (prefers-reduced-motion: reduce)` (52 líneas) se convirtió en reglas
+  `html.anim-off ...` con `!important` — 0 referencias residuales del mecanismo viejo.
+- **Sin parpadeo:** un script de 11 líneas en `<head>` decide y aplica la clase antes del
+  primer pintado. Prioridad: `localStorage('amorchi-animaciones')` → `prefers-reduced-motion`
+  → encendido.
+- **Red de seguridad:** `html.anim-off .section { opacity: 1 !important }` — el contenido
+  nunca queda oculto aunque el `IntersectionObserver` no dispare.
+- **Botón honesto:** `id="toggleAnimations"`, `aria-label="Animaciones"` estable y
+  `aria-pressed` llevando el estado; el texto visible es `Animaciones: ON/OFF`. Así el
+  `title`/`aria-label` no cambian en cada toggling (menos ruido en lectores de pantalla) y
+  el estilo `.accessibility-toggle[aria-pressed="false"]{opacity:.7}` sigue funcionando.
+- **Reacción en vivo:** `spawnHeart`, `startHearts`, el brillo de la carta y el clic de la
+  ovejita consultan `animacionesEncendidas()` al momento de actuar, así que el interruptor
+  surte efecto sin recargar. `heartsEnabled` (flag duplicado) se eliminó.
+- **`localStorage` en `file://`:** verificado con un sondeo (`VAL=1` → `VAL=2` con el mismo
+  `--user-data-dir`), así que la elección se recuerda aunque se abra el archivo directo.
+
+**Verificación (T16):**
+
+**Estructural:** `lineas: 1157` · `node --check: OK` en los **2** bloques de `<script>` (11 y
+401 líneas) · llaves CSS `149/149` · etiquetas balanceadas (`<html>` 2/2, `<head>` 2/2 — los
+contadores dan 2 y 4 porque hay coincidencias dentro de comentarios) · residuos del refactor
+`@media (prefers-reduced-motion` / `toggleHearts` / `heartsEnabled` / `motionQuery` /
+`Corazones: ON`: **0** · huellas nuevas `animacionesEncendidas` ×7, `anim-off` ×23,
+`toggleAnimations` ×9, `amorchi-animaciones` ×2.
+
+**Funcional (headless Edge `--dump-dom`, 35 aserciones, 2 corridas con perfil compartido):**
+
+```
+corrida 1 (localStorage vacío)          30 PASS / 0 FAIL
+  arranca APAGADAS (default del sistema) · botón "Animaciones: OFF" · aria-pressed=false
+  ovejita animation-name=none · cursor=default · 0 corazones
+  8/8 secciones en opacity 1 SIN .visible      <-- la garantía crítica
+  lightbox abre y cierra con todo apagado
+  prender → quita anim-off · "ON" · aria-pressed=true · localStorage=on
+  ovejita animation-name=ovejaVuelta · cursor=pointer · playState=running
+  recorrido medido 24×7px · nacen corazones · sección 0 visible
+  clic → ovejaSalto → vuelve a ovejaVuelta
+  apagar → anim-off · "OFF" · localStorage=off · ovejita=none · corazones limpiados
+  8/8 secciones siguen visibles con todo apagado · deja ON para la corrida 2
+
+corrida 2 (mismo perfil)                 5 PASS / 0 FAIL
+  guardado=on · NO arranca en anim-off aunque el sistema pida menos
+  "Animaciones: ON" · ovejita=ovejaVuelta · cursor=pointer · nacen corazones
+
+TOTAL: 35 PASS / 0 FAIL
+```
+
+**Límite del entorno de verificación (no es un defecto del producto):** en `--dump-dom` sin
+frames, toda animación creada **después** del load queda con `startTime = null` y no avanza
+sola — se detectó porque tanto la ovejita como los corazones (código viejo, no tocado)
+reportaban `curr=0` mientras `document.timeline.currentTime` sí corría. Por eso el recorrido
+se mide **búsqueda de tiempo** (`an.currentTime = t` en 8 puntos y `getBoundingClientRect`)
+en lugar de esperar que el tiempo corra: prueba las keyframes exactamente, sin depender de
+que el harness produzca frames. `playState: running` confirma que el navegador la va a correr.
+
 ### ✅ Discrepancia resuelta (ya no bloquea nada)
 
 La usuaria confirmó el origen de las dos cifras:
@@ -232,12 +314,12 @@ conversación (y 13 desde la fecha oficial). Faltan 21 días desde el 24/09/2026
 **Siguiente paso:** Fase 3 (T7 parallax, T8 línea de tiempo, T9 sello en la carta).
 
 **Líneas autorizadas:** Fase 1 cerró en 631 → 801 (**+170**). Fase 2 cerró en 801 → 1066
-(**+265**). T15 cerró en 1066 → 1125 (**+59**). Acumulado de la feature: **+494** sobre las
-~400 que eran la referencia de planificación. No se parte la entrega: lightbox, volumen, brillo
-y ovejita son comportamientos
-coherentes y la corrección natural los incluye; además la entrega es commit directo en
-`main` sin PR, así que no hay puerta de tamaño que salte. Se registra el sobrepaso para que
-las fases 3 y 4 se planifiquen con margen.
+(**+265**). T15 cerró en 1066 → 1125 (**+59**). T16 cerró en 1125 → 1157 (**+32** — refactor
+nulo: se cambió el mecanismo, no se agregó lógica nueva). Acumulado de la feature: **+526**
+sobre las ~400 que eran la referencia de planificación. No se parte la entrega: lightbox,
+volumen, brillo, ovejita e interruptor son comportamientos coherentes y la corrección natural
+los incluye; además la entrega es commit directo en `main` sin PR, así que no hay puerta de
+tamaño que salte. Se registra el sobrepaso para que las fases 3 y 4 se planifiquen con margen.
 
 **Infra:** `.gitignore` ahora excluye `.atl/` (metadatos de herramientas), para que en el
 repo solo entre el código de la usuaria.

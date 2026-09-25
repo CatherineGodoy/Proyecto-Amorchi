@@ -3,6 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    /* Estado de animaciones, antes del primer pintado.
+       Prioridad: eleccion guardada > preferencia del sistema. El sistema pone
+       el VALOR INICIAL, no un candado: el boton de la pagina puede pisarlo. */
+    (function () {
+      var guardado = null;
+      try { guardado = localStorage.getItem('amorchi-animaciones'); } catch (e) {}
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var animar = guardado !== null ? guardado === 'on' : !reduce;
+      document.documentElement.classList.toggle('anim-off', !animar);
+    })();
+  </script>
   <title>14 años contigo ❤️</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -459,58 +471,60 @@
       }
     }
 
-    /* ===== ACCESIBILIDAD ===== */
-    @media (prefers-reduced-motion: reduce) {
-      /* Desactivar animaciones que pueden causar incomodidad */
-      .section {
-        opacity: 1 !important;
-        transform: none !important;
-        transition: none !important;
-      }
-      .heart {
-        animation: none !important;
-      }
-      .scroll-progress {
-        transition: none !important;
-      }
-      .float-item {
-        animation: none !important;
-        display: none !important;
-      }
-      .memory-pointer-gif {
-        animation: none !important;
-        /* Sin animacion no hay reaccion posible: no prometemos el click */
-        cursor: default !important;
-      }
-      .memory,
-      .memory:hover,
-      .memory:hover .memory-img-wrapper img,
-      .btn-start:hover,
-      .accessibility-toggle:hover,
-      .btn-play:hover {
-        transform: none !important;
-        transition: none !important;
-      }
-      /* Lightbox y brillo de la carta: sin transiciones ni escalados */
-      .lightbox,
-      .lightbox-figure,
-      .letter::before {
-        transition: none !important;
-      }
-      .lightbox.open .lightbox-figure {
-        transform: none !important;
-      }
-      .lightbox-close:hover,
-      .btn-volume:hover {
-        transform: none !important;
-        transition: none !important;
-      }
-      /* El translateY(-50%) es posición, no movimiento: se conserva */
-      .lightbox-nav,
-      .lightbox-nav:hover {
-        transition: none !important;
-        transform: translateY(-50%) !important;
-      }
+    /* ===== ANIMACIONES: interruptor general ===== */
+    /* La clase la pone el script del <head> (eleccion guardada > sistema) y
+       la cambia el boton de la esquina. El sistema decide de donde arrancas,
+       no que podes hacer: por eso esto es una clase y no un @media candado.
+       Regla de oro: apagar animaciones apaga el MOVIMIENTO, nunca el contenido
+       — .section conserva opacity 1 para que nada quede invisible. */
+    html.anim-off .section {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+    html.anim-off .heart {
+      animation: none !important;
+    }
+    html.anim-off .scroll-progress {
+      transition: none !important;
+    }
+    html.anim-off .float-item {
+      animation: none !important;
+      display: none !important;
+    }
+    html.anim-off .memory-pointer-gif {
+      animation: none !important;
+      /* Sin animacion no hay reaccion posible: no prometemos el click */
+      cursor: default !important;
+    }
+    html.anim-off .memory,
+    html.anim-off .memory:hover,
+    html.anim-off .memory:hover .memory-img-wrapper img,
+    html.anim-off .btn-start:hover,
+    html.anim-off .accessibility-toggle:hover,
+    html.anim-off .btn-play:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+    /* Lightbox y brillo de la carta: sin transiciones ni escalados */
+    html.anim-off .lightbox,
+    html.anim-off .lightbox-figure,
+    html.anim-off .letter::before {
+      transition: none !important;
+    }
+    html.anim-off .lightbox.open .lightbox-figure {
+      transform: none !important;
+    }
+    html.anim-off .lightbox-close:hover,
+    html.anim-off .btn-volume:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+    /* El translateY(-50%) es posición, no movimiento: se conserva */
+    html.anim-off .lightbox-nav,
+    html.anim-off .lightbox-nav:hover {
+      transition: none !important;
+      transform: translateY(-50%) !important;
     }
 
     /* ===== BOTÓN DE ACCESIBILIDAD ===== */
@@ -715,10 +729,12 @@
       <p style="margin-top:.4rem;opacity:.8">14 años juntos • Desde Prontera, Ragnarok Online • Para siempre</p>
     </footer>
 
-    <!-- ===== BOTÓN DE ACCESIBILIDAD: CORAZONES ===== -->
-    <button class="accessibility-toggle" id="toggleHearts" aria-pressed="true" aria-label="Activar o desactivar corazones flotantes">
+    <!-- ===== BOTÓN DE ACCESIBILIDAD: ANIMACIONES ===== -->
+    <!-- Nombre accesible estable ("Animaciones"), el estado lo lleva
+         aria-pressed, y el texto visible cambia para quien mira la pantalla. -->
+    <button class="accessibility-toggle" id="toggleAnimations" type="button" aria-pressed="true" aria-label="Animaciones" title="Animaciones">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <span id="toggleHeartsText">Corazones: ON</span>
+      <span id="toggleAnimationsText">Animaciones: ON</span>
     </button>
   </main>
 
@@ -751,14 +767,22 @@
     }, { threshold: .1, rootMargin: '0px 0px -50px 0px' });
     document.querySelectorAll('.section').forEach(s => observer.observe(s));
 
-    // Corazones flotantes con toggle de accesibilidad
+    // ===== Fuente de verdad de las animaciones =====
+    // La clase anim-off en <html> la pone el script del <head> (eleccion
+    // guardada > preferencia del sistema, antes del primer pintado) y la
+    // cambia el boton de la esquina. Todo consulta esta funcion: es el unico
+    // lugar que sabe si estan encendidas, asi el boton nunca miente.
+    function animacionesEncendidas() {
+      return !document.documentElement.classList.contains('anim-off');
+    }
+
+    // Corazones flotantes: los gobierna el interruptor general de animaciones
     const container = document.querySelector('.float-prontera');
     const heartsItems = ['❤️','💖','💕','💗','💓','💞'];
-    let heartsEnabled = true;
     let heartsInterval = null;
 
     function spawnHeart() {
-      if (!heartsEnabled || document.hidden) return;
+      if (!animacionesEncendidas() || document.hidden) return;
       const el = document.createElement('span');
       el.className = 'float-item';
       el.textContent = heartsItems[Math.floor(Math.random() * heartsItems.length)];
@@ -771,6 +795,9 @@
 
     function startHearts() {
       if (heartsInterval) clearInterval(heartsInterval);
+      heartsInterval = null;
+      // Sin animaciones no hay intervalo que valga la pena mantener
+      if (!animacionesEncendidas()) return;
       heartsInterval = setInterval(spawnHeart, FLOAT_ITEM_INTERVAL);
     }
 
@@ -781,24 +808,27 @@
       container.innerHTML = '';
     }
 
-    // Iniciar corazones por defecto
-    startHearts();
+    // ===== Interruptor general de animaciones =====
+    const toggleAnimationsBtn = document.getElementById('toggleAnimations');
+    const toggleAnimationsText = document.getElementById('toggleAnimationsText');
 
-    // Botón de toggle para corazones
-    const toggleHeartsBtn = document.getElementById('toggleHearts');
-    const toggleHeartsText = document.getElementById('toggleHeartsText');
+    function reflejarToggleAnimaciones() {
+      const on = animacionesEncendidas();
+      toggleAnimationsBtn.setAttribute('aria-pressed', String(on));
+      toggleAnimationsText.textContent = on ? 'Animaciones: ON' : 'Animaciones: OFF';
+    }
 
-    toggleHeartsBtn.addEventListener('click', () => {
-      heartsEnabled = !heartsEnabled;
-      toggleHeartsBtn.setAttribute('aria-pressed', heartsEnabled);
-      toggleHeartsText.textContent = heartsEnabled ? 'Corazones: ON' : 'Corazones: OFF';
-      
-      if (heartsEnabled) {
-        startHearts();
-      } else {
-        stopHearts();
-      }
+    toggleAnimationsBtn.addEventListener('click', () => {
+      const encender = !animacionesEncendidas();
+      document.documentElement.classList.toggle('anim-off', !encender);
+      try { localStorage.setItem('amorchi-animaciones', encender ? 'on' : 'off'); } catch (e) {}
+      reflejarToggleAnimaciones();
+      if (encender) startHearts(); else stopHearts();
     });
+
+    // Estado inicial a partir de la clase que ya puso el <head>
+    reflejarToggleAnimaciones();
+    startHearts();
 
     // Referencias del DOM y reproductor de música
     const btnPlay = document.getElementById('btnPlay');
@@ -1078,12 +1108,13 @@
     setVolume(100);
 
     // ===== Brillo de la carta que sigue el cursor =====
+    // Se adjunta siempre y consulta el interruptor al vuelo: si las animaciones
+    // se encienden a mitad de sesion, el brillo empieza a seguir sin recargar.
     const letterEl = document.querySelector('.letter');
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    // Con movimiento reducido no se adjunta el seguimiento: el brillo queda estático
-    if (letterEl && !motionQuery.matches) {
+    if (letterEl) {
       letterEl.addEventListener('pointermove', (e) => {
+        if (!animacionesEncendidas()) return;
         const rect = letterEl.getBoundingClientRect();
         letterEl.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
         letterEl.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
@@ -1092,27 +1123,28 @@
 
     // ===== Ovejita: reaccion al click =====
     // ovejaSalto toma el transform durante 700ms y termina exactamente en el
-    // 0% de ovejaVuelta, asi que al soltarla la vuelta al sitio sigue sin
-    // salto. Con movimiento reducido no se adjunta nada (el CSS ya la fija).
-    if (!motionQuery.matches) {
-      document.querySelectorAll('.memory-pointer-gif').forEach(oveja => {
-        let timer;
-        const soltar = () => oveja.classList.remove('oveja-gira');
-        oveja.addEventListener('animationend', e => {
-          if (e.animationName === 'ovejaSalto') soltar();
-        });
-        oveja.addEventListener('click', () => {
-          oveja.classList.remove('oveja-gira');
-          void oveja.offsetWidth; // reflow: reinicia si ya estaba reaccionando
-          oveja.classList.add('oveja-gira');
-          // Respaldo: si animationend no llega (pestaña en background o
-          // movimiento reducido activado a mitad de vuelta) la ovejita no
-          // puede quedarse clavada en ovejaSalto, que dejaria de moverse.
-          clearTimeout(timer);
-          timer = setTimeout(soltar, 750);
-        });
+    // 0% de ovejaVuelta, asi que al soltarla la vuelta al sitio sigue sin salto.
+    // El listener esta siempre y consulta el interruptor al vuelo: con las
+    // animaciones apagadas no hace nada, y el CSS ya puso cursor:default para
+    // no prometer un clic que no va a responder.
+    document.querySelectorAll('.memory-pointer-gif').forEach(oveja => {
+      let timer;
+      const soltar = () => oveja.classList.remove('oveja-gira');
+      oveja.addEventListener('animationend', e => {
+        if (e.animationName === 'ovejaSalto') soltar();
       });
-    }
+      oveja.addEventListener('click', () => {
+        if (!animacionesEncendidas()) return;
+        oveja.classList.remove('oveja-gira');
+        void oveja.offsetWidth; // reflow: reinicia si ya estaba reaccionando
+        oveja.classList.add('oveja-gira');
+        // Respaldo: si animationend no llega (pestana en background o el
+        // interruptor apagado a mitad de vuelta) la ovejita no puede quedarse
+        // clavada en ovejaSalto, que dejaria de moverse.
+        clearTimeout(timer);
+        timer = setTimeout(soltar, 750);
+      });
+    });
 
     document.querySelectorAll('a[href^="#"]').forEach(a => {
       a.addEventListener('click', e => {
