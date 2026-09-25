@@ -106,29 +106,32 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 
 ```
 JS inline: sintaxis OK          (node --check sobre el <script> extraído)
-section:   4 abierto / 4 cerrado OK
-article:   3 abierto / 3 cerrado OK
-button:    3 abierto / 3 cerrado OK
-div:      35 abierto / 35 cerrado OK
-style:     1/1   script: 1/1
-líneas:    797 (antes: 631)
+section:   4/4 OK · article 3/3 OK · button 3/3 OK · div 35/35 OK
+braces CSS: 97/97 OK
+lógica (node): 4727 días · borde t=inicio → todo en 0 · reloj atrasado → clamp a 0
 ```
 
-**Pendiente de verificación manual (usuario):** abrir `index.html` y confirmar que el
-contador avanza, la barra llena al scrollear y los separadores aparecen con la animación.
+**Verificación visual (headless Edge `--screenshot`):** se capturó el viewport en desktop
+(1280px) y móvil (390px). Confirmado: contador en vivo, separadores con corazón arriba y
+abajo, secciones reveladas, toggle de corazones operativo.
 
-### ⚠️ Discrepancia detectada — requiere decisión
+**Defecto encontrado y corregido en la revisión visual:** Cormorant Garamond renderiza
+figuras de estilo antiguo (alturas desiguales), por lo que `4727` mostraba el `2` elevado y
+las celdas se veían desparejas. Corregido con `font-variant-numeric: lining-nums tabular-nums`
++ `font-feature-settings:"lnum" 1,"tnum" 1`. Commit `536be05`.
 
-La usuaria informó **15/10/2013** como fecha especial. Hoy (2026-09-24) eso son
-**12 años cumplidos** (el 13° se cumple el 15/10/2026, en 21 días), pero la página dice
-**"14 años juntos"** en el badge, el título, el footer y el README.
+### ✅ Discrepancia resuelta (ya no bloquea nada)
 
-Hipótesis: los 14 años se cuentan desde que se conocieron en Ragnarok Online (~2012), y el
-15/10/2013 sería el encuentro en persona. **Sin confirmar.** No se modifica ningún texto
-de "14 años" hasta que la usuaria lo resuelva.
+La usuaria confirmó el origen de las dos cifras:
 
-**Siguiente paso:** confirmar el origen de los "14 años", hacer commit de la Fase 1,
-evaluar el límite de 400 líneas autorizadas antes de arrancar la Fase 2.
+- **"14 años"** = desde que empezaron a conversar, ~**octubre de 2012** (antes de fin de año).
+- **15/10/2013** = **fecha oficial**, la que se eligió conservar para el contador.
 
-**Líneas autorizadas estimadas:** ~450–700 (suma de las 4 fases). Fase 1 cerró en **+166
-líneas autorizadas** (631 → 797 en `index.html`), dentro del presupuesto.
+Verificado con cálculo: el **15/10/2026** se cumplen exactamente **14 años** desde la
+conversación (y 13 desde la fecha oficial). Faltan 21 días desde el 24/09/2026. El rótulo
+"14 años" es correcto y **no se modifica ningún texto**.
+
+**Siguiente paso:** Fase 2 (T4 lightbox, T5 volumen, T6 hover en la carta).
+
+**Líneas autorizadas:** Fase 1 cerró en 631 → 801 líneas en `index.html` (**+170**), dentro
+del presupuesto de 400. Verificar de nuevo el acumulado al cerrar la Fase 2.
