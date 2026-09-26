@@ -70,6 +70,7 @@ ritmo a la lectura.
 
 - [x] **T15** Ovejita de la galería: que se mueva sola y además reaccione al clic
 - [x] **T16** Interruptor general de animaciones (reemplaza el bloque `prefers-reduced-motion`)
+- [x] **T17** Ovejita y tarjetas alineadas: quitar el `row-reverse` de la fila 2019 y centrar el nodo sobre la línea
 
 ## Criterios de aceptación
 
@@ -108,13 +109,14 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T5 | ✅ Hecha | Slider con `--fill`, botón de silenciar con `lastVolume`, `aria-pressed`/`aria-label`/`title` según estado |
 | T6 | ✅ Hecha | `--mx`/`--my` seteados por `pointermove` (69.99% / 20% medido); el listener está siempre adjunto y consulta `animacionesEncendidas()` (antes se condicionaba a `prefers-reduced-motion` al cargar) |
 | T7 | ✅ Hecha | Parallax a dos velocidades con `--scroll-p` (160px / 460px), `inset` negativo igual al recorrido para que nunca se descubra el borde |
-| T8 | ✅ Hecha | Línea de 2px con degradado + nodos de 14px; nodos alineados al píxel con la línea (250/250 desktop, 39/39 móvil) y sin pisar ninguna tarjeta |
+| T8 | ✅ Hecha | Línea de 2px con degradado + nodos de 14px; `left` del nodo `-6px` (no `-7px`) para que su centro caiga sobre el centro de la línea — medido `0,0,0px` en los 3 anchos; sin pisar ninguna tarjeta |
 | T9 | ✅ Hecha | Lacre SVG en flujo con `role="img"`; dibujo `5,5 110x110` y texto `34,81 53x15`, ambos dentro del `viewBox`; no tapa firma ni GIF |
 | T10–T12 | ⏳ Pendiente | Fase 4 |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
 | T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` + `eb7359c` docs (Fase 1) · `3478998` feat (Fase 2) — los 5 en `origin/main` |
-| T15 | ✅ Hecha | Ovejita: `ovejaVuelta` autónoma + `ovejaSalto` al clic, sin colisión con foto/título/tarjeta — 39/39 PASS en 3 anchos |
+| T15 | ✅ Hecha | Ovejita: `ovejaVuelta` autónoma + `ovejaSalto` al clic, sin colisión con foto/título/tarjeta — 39/39 PASS en 3 anchos. Ampliado: siempre en el mismo lado (ver "ovejita al mismo lado") |
 | T16 | ✅ Hecha | Interruptor general de animaciones: clase `anim-off` en `<html>` reemplaza a `@media (prefers-reduced-motion)`, decisión en `<head>` sin parpadeo, elección en `localStorage` — 35/35 PASS en 2 corridas |
+| T17 | ✅ Hecha | Sin `row-reverse` en la fila 2019: las 3 filas con `0px` de diferencia en ovejita/tarjeta/nodo; nodo `-6px` para caer en el centro exacto de la línea — 46/46 PASS en 3 anchos |
 
 ### Verificación ejecutada (Fase 1)
 
@@ -355,6 +357,58 @@ el parallax **sin JS** (soporte confirmado con `@supports`, pero `transform` no 
 de forma consistente). Se descartó y se fue por el `requestAnimationFrame` que la página ya
 usaba — patrón probado en el repo, cero tecnología nueva.
 
+### Corrección — la ovejita, siempre al mismo lado (pedido de la usuaria)
+
+**Pedido (25/09/2026):** *"dejemos la oveja al mismo lado… desentona de las demás, más si se
+hizo esa línea"* — se adjuntó una captura con la fila 2019 mostrando la ovejita a la
+**derecha** mientras las otras dos estaban a la izquierda.
+
+**Causa:** `.memory-row:nth-child(even) { flex-direction: row-reverse }`. Esa regla tenía dos
+efectos: (1) invertía el orden de los hijos en la fila 2019, dejando la ovejita pegada al
+borde derecho —del lado contrario a la línea de tiempo—, y (2) desplazaba la tarjeta de esa
+fila **89px** respecto a las demás (`65px` de la ovejita + `24px` de gap), de modo que sus
+bordes no coincidían con los de las filas 2013 y 2025. Con la línea de tiempo encima, las
+tarjetas dejaban de colgar de un mismo eje y la fila 2019 se leía como una excepción.
+
+**Cambio:** se eliminó la regla completa y se simplificó el selector del media query móvil
+(`.memory-row, .memory-row:nth-child(even)` → `.memory-row`), que quedó redundante.
+
+**Consecuencia registrada (y querida):** al quitar el `row-reverse` **se pierde el patrón
+alternado** de las filas, porque era la propia ovejita la que generaba el hueco que hacía
+alternar. Son mutuamente excluyentes: o la ovejita cambia de lado con la fila, o las filas
+quedan alineadas. La usuaria eligió alineación — que es exactamente lo contrario de
+"desentona". También se documentó en el README que al duplicar un `.memory-row` **no** se
+debe invertir el orden de los hijos.
+
+**Verificación (46 aserciones × 3 anchos = 138, 0 fallos):**
+
+```
+1280 · layout fila      t.left=362 g.left=273 n.x=244  (las 3 filas, IDÉNTICAS)
+ 768 · layout columna   t.left=54  g.left=362 n.x=33   (las 3 filas, IDÉNTICAS)
+ 390 · layout columna   t.left=54  g.left=236 n.x=33   (las 3 filas, IDÉNTICAS)
+
+las 3 ovejitas en el mismo x .......... 0px
+las 3 tarjetas en el mismo eje ........ 0px
+las 3 tarjetas con el mismo ancho ..... 0px
+escritorio: 3 ovejitas a la izquierda de la tarjeta ... ok
+escritorio: 3 ovejitas centradas en el alto de su fila . ok (0,0,0px)
+móvil: ovejita centrada sobre la foto y ARRIBA de ella .. ok
+ovejita sin solape con el nodo de la línea ............. ok
+ovejita dentro del contenedor (46px / 338px / 212px de aire) ok
+nodos CENTRADOS sobre la línea ........ 0,0,0px   (antes: -1,-1,-1px)
+regresión Fase 3 (T7/T8/T9) ........... 120 PASS / 0 FAIL
+```
+
+**Hallazgo de precisión (T8):** el nodo usaba `left: calc(var(--tl-gutter) / -2 - 7px)`. Su
+centro cae en `left + 7`, y el centro de la línea está en `gutter/2 + 1` (la línea mide 2px,
+no 1). Con `-7px` el nodo quedaba **1px desviado**. Corregido a `-6px`: `0,0,0px` de
+desfase en los tres anchos.
+
+**Hallazgo del entorno (tercero de la serie):** la extracción de resultados del harness
+usaba `id="TESTRES">(...)`, que **no matchea** cuando el `div` tiene `style` inline
+(`id="TESTRES" style="...">`). Costó un ciclo entero de "el test no corre" cuando el test
+corría bien. Regex correcta: `id="TESTRES"[^>]*>([^<]*)`.
+
 ### ✅ Discrepancia resuelta (ya no bloquea nada)
 
 La usuaria confirmó el origen de las dos cifras:
@@ -372,7 +426,8 @@ areas para notch).
 **Líneas autorizadas:** Fase 1 cerró en 631 → 801 (**+170**). Fase 2 cerró en 801 → 1066
 (**+265**). T15 cerró en 1066 → 1125 (**+59**). T16 cerró en 1125 → 1157 (**+32** — refactor
 nulo: se cambió el mecanismo, no se agregó lógica nueva). Fase 3 cerró en 1157 → 1218
-(**+61**). Acumulado de la feature: **+587**
+(**+61**). Corrección de la ovejita cerró en 1218 → 1221 (**+3** — 1 de reglas CSS quitado
+y 3 de comentarios). Acumulado de la feature: **+590**
 sobre las ~400 que eran la referencia de planificación. No se parte la entrega: lightbox,
 volumen, brillo, ovejita, interruptor y pulido visual son comportamientos coherentes y la
 corrección natural los incluye; además la entrega es commit directo en `main` sin PR, así

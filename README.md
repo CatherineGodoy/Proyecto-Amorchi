@@ -26,7 +26,7 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 | 🔍 **Lightbox de fotos** | Vista ampliada de las fotos de la galería con navegación y teclado completo |
 | 🔊 **Control de volumen** | Slider de volumen y botón de silenciar que recuerda el último nivel |
 | ✨ **Brillo de la carta** | Resplandor que sigue al cursor sobre la carta final |
-| 🐑 **Ovejita viva** | La ovejita de cada tarjeta deambula sola y reacciona con una vueltita al hacer clic |
+| 🐑 **Ovejita viva** | La ovejita de cada tarjeta deambula sola, siempre en el mismo lado, y reacciona con una vueltita al hacer clic |
 | 🏔️ **Fondo con parallax** | Las dos capas del fondo se deslizan a distinta velocidad al hacer scroll |
 | 📅 **Línea de tiempo** | Una línea con nodos conecta los momentos de 2013, 2019 y 2025 |
 | 💌 **Sello en la carta** | Lacre dibujado en SVG que remata la carta al pie |
@@ -61,6 +61,8 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 - **Sin interferencia con la foto**: Se quitó `pointer-events: none` para poder clickearla. Se verificó en escritorio, tablet y celular que su rectángulo nunca se cruza con ninguna foto, el título ni las tarjetas, así que el lightbox sigue recibiendo su propio clic.
 - **Fallo seguro**: si `animationend` no llega (pestaña en background o movimiento reducido activado a mitad de vuelta), un `setTimeout` de 750ms la suelta para que no se quede clavada.
 - **Apagada no promete nada**: sin animación no hay reacción posible, así que el cursor queda en `default` para no prometer un clic que no haría nada. Los listeners siguen adjuntos, así que al encender el interruptor la ovejita vuelve a responder sin recargar.
+- **Las tres filas, idénticas**: se quitó el `flex-direction: row-reverse` de la fila par. Antes esa regla ponía la ovejita de la fila 2019 a la **derecha** (desentonando con las otras dos y con la línea de tiempo) y además desplazaba su tarjeta 89px respecto a las demás. Ahora las tres filas dan exactamente los mismos valores: ovejita en el mismo `x`, tarjeta en el mismo eje y con el mismo ancho, y nodo de la línea en el mismo punto. En móvil el layout es columna: la ovejita queda centrada arriba de la foto, igual en las tres.
+- **Nodo exacto sobre la línea**: el `left` del nodo pasó de `-7px` a `-6px` respecto a la canaleta, porque el centro del nodo (`left + 7`) tiene que caer sobre el centro de la línea (`gutter/2 + 1`, ya que la línea mide 2px). Con `-7px` el nodo quedaba 1px desviado — imperceptible a simple vista, pero un eje que no es un eje.
 
 ### Interruptor general de animaciones
 
@@ -201,7 +203,21 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - La descripción (`p`)
 - El año (`memory-footer-year`)
 
+No inviertas el orden de los hijos: la ovejita va **primero** y la tarjeta después, en las tres filas. El patrón alternado (`row-reverse`) se eliminó justamente porque descolocaba la ovejita y desplazaba esa tarjeta respecto a las demás.
+
 ## 📋 Changelog
+
+### v1.5.1 (2026-09-25)
+
+**Correcciones:**
+- 🐑 Las tres ovejitas quedan **siempre en el mismo lado** (izquierda, junto a la línea de tiempo): se quitó el `flex-direction: row-reverse` de la fila 2019, que las ponía a la derecha —desentonando con las otras y con la línea— y además desplazaba esa tarjeta 89px respecto a las demás
+- 📍 El nodo de la línea de tiempo se corrió 1px (`-7px` → `-6px`) para que su centro caiga exactamente sobre el centro de la línea, que mide 2px
+
+**Verificación:**
+- ✅ 46 aserciones, **0 fallos**, en 1280 / 768 / 390 px: las tres filas con `0px` de diferencia en el `x` de la ovejita, el eje y el ancho de la tarjeta; los tres nodos centrados sobre la línea en `0,0,0px`
+- ✅ Sin solapes: la ovejita no toca el nodo de la línea, la foto ni el título; en móvil queda centrada arriba de la foto
+- ✅ Regresión de Fase 3 completa: 120 PASS / 0 FAIL en los tres anchos
+- ✅ `node --check` OK en los 2 bloques, llaves CSS 154/154, etiquetas balanceadas
 
 ### v1.5.0 (2026-09-25)
 

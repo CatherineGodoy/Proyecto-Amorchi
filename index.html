@@ -194,18 +194,21 @@
       width: 100%;
       position: relative;
     }
-    /* Nodo sobre la línea, a la altura de la mitad de la tarjeta */
+    /* Nodo sobre la línea, a la altura de la mitad de la tarjeta.
+       -6px: el centro del nodo (left + 7) debe caer EXACTAMENTE sobre el
+       centro de la línea (gutter/2 + 1, porque la línea mide 2px). */
     .memory-row::before{
       content:"";position:absolute;top:50%;
-      left:calc(var(--tl-gutter) / -2 - 7px);
+      left:calc(var(--tl-gutter) / -2 - 6px);
       transform:translateY(-50%);
       width:14px;height:14px;border-radius:50%;
       background:var(--white);border:3px solid var(--accent);
       box-shadow:0 0 0 4px rgba(214,51,132,.13);
     }
-    .memory-row:nth-child(even) {
-      flex-direction: row-reverse;
-    }
+    /* Sin row-reverse: las tres filas quedan identicas — ovejita a la
+       izquierda, junto a la linea de tiempo, y la tarjeta alineada al
+       mismo eje en las tres. El alterno descolocaba la ovejita de la
+       fila 2019 y desplazaba su tarjeta 89px respecto a las demas. */
 
     .memory-pointer-gif {
       width: 65px;
@@ -499,7 +502,7 @@
     /* ===== RESPONSIVE ===== */
     @media (max-width:768px){
       :root{ --tl-gutter:30px }
-      .memory-row, .memory-row:nth-child(even) {
+      .memory-row {
         flex-direction: column;
         align-items: center;
         gap: 0.8rem;
