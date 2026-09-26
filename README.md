@@ -54,6 +54,15 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 - **Sello en la carta**: Un lacre en SVG inline (dos círculos concéntricos, el segundo punteado, un corazón y el rótulo "14 AÑOS") remata la carta después del GIF. Va **en el flujo**, no superpuesto, así que nunca tapa texto; lleva un giro de -7° para que se lea estampado y no como un ícono. `role="img"` con `aria-label` para que el lector de pantalla lo anuncie.
 - **Sin tecnología nueva**: todo lo de la Fase 3 es CSS y media línea de JS. Se evaluó `animation-timeline: scroll()` para hacer el parallax puramente en CSS, pero el comportamiento en el navegador de verificación no fue consistente, así que se prefirió el patrón de `requestAnimationFrame` que la página ya usaba y ya estaba probado.
 
+### Fase 4 — Performance
+
+- **Fotos en WebP**: las tres fotos de la galería pasaron de JPEG a WebP a calidad 82: 216 KB → 142 KB (**−34%**, 72 KB menos). El payload inicial de la página (sin contar la música) baja de 355 KB a 281 KB: **−21%**.
+- **Sin salto de layout (CLS)**: los atributos `width`/`height` de las tres fotos decían `800×600`, que no coincidía con ninguna de las imágenes reales. Ahora declaran 960×720, 960×1280 y 520×1152, así que el navegador reserva la caja exacta antes de decodificar y la foto no mueve el contenido al cargar.
+- **Fuentes por rango variable**: la URL de Google Fonts pide `ital,wght@0,400..700;1,400..700` y `wght@400..700` en lugar de pesos sueltos. Las dos familias ya se servían como **un solo woff2 variable** por subconjunto —las URLs de 400/500/700 eran idénticas—, así que el bytes descargado **no cambia**; lo que sí cambia es que bajan los bloques `@font-face` de 37 a 18 y, sobre todo, que los tres estilos que piden `font-weight: 600` dejan de quedar clampados a 700 y se renderizan en su peso real.
+- **Safe areas**: `viewport-fit=cover` en el `<meta viewport>` permite que el fondo llegue al borde físico de la pantalla, y cuatro variables (`--sat`/`--sar`/`--sab`/`--sal`, todas con fallback a `0px`) empujan los controles interactivos fuera de la muesca y de la barra de inicio: barra de scroll, botón flotante de animaciones, pie de página, cerrar y navegar del lightbox, y el padding horizontal de `.page`. En pantallas sin muesca todo evalúa a 0 y el layout es idéntico al anterior.
+- **Lo que queda igual, a propósito**: los GIFs (`bubu-dudu.gif`, `ovejita.gif`) no se convierten porque convertir un GIF a WebP con canvas descartaría la animación y dejaría un fotograma fijo, y no hay herramienta de conversión animada disponible. La música (`prontera-theme.mp3`, 8.9 MB) usa `preload="metadata"`, así que no entra en el primer render.
+- **Medición honesta**: se comprobó contra la API de Google Fonts que los pesos sueltos y los rangos apuntan a los **mismos archivos woff2**, por lo que el ahorro real de T11 es de CSS y de correctitud de peso, **no de bytes transferidos**.
+
 ### Pulido — Ovejita de la galería
 
 - **Deambula sola**: Cada ovejita recorre una elipse de 24×7px descentrada hacia arriba (`@keyframes ovejaVuelta`, 4s en bucle) en lugar de quedarse quieta. El recorrido cabe entero en el hueco de la fila (24px en escritorio) y en móvil deja más de 4px sobre la foto, así que nunca la toca.
@@ -133,9 +142,9 @@ El botón que antes solo apagaba los corazones ahora decide **si la página se a
 ├── prontera-theme.mp3            # Música de fondo (Tema de Prontera)
 ├── ovejita.gif                   # GIF decorativo para las tarjetas
 ├── bubu-dudu.gif                 # GIF de la pareja
-├── foto1-primer-encuentro.jpg    # Foto del primer encuentro (2013)
-├── foto2-momentos-felices.jpg    # Foto de momentos felices (2019)
-├── foto3-siempre-juntos.jpeg     # Foto de siempre juntos (2025)
+├── foto1-primer-encuentro.webp    # Foto del primer encuentro (2013, WebP)
+├── foto2-momentos-felices.webp    # Foto de momentos felices (2019, WebP)
+├── foto3-siempre-juntos.webp      # Foto de siempre juntos (2025, WebP)
 └── odd/tasks/                    # Documento de seguimiento de mejoras
 ```
 
@@ -206,6 +215,20 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 No inviertas el orden de los hijos: la ovejita va **primero** y la tarjeta después, en las tres filas. El patrón alternado (`row-reverse`) se eliminó justamente porque descolocaba la ovejita y desplazaba esa tarjeta respecto a las demás.
 
 ## 📋 Changelog
+
+### v1.6.0 (2026-09-26)
+
+**Fase 4 — Performance:**
+- 🖼️ Las tres fotos pasan de JPEG a **WebP** (calidad 82): 216 KB → 142 KB, **−34%**; payload inicial sin música 355 KB → 281 KB, **−21%**. Se borraron los JPEG originales
+- 📐 Los `width`/`height` de las fotos pasan de `800×600` (falsos) a las dimensiones reales 960×720, 960×1280 y 520×1152 → cero layout shift al cargar
+- 🔤 La URL de fuentes pasa a rangos variables (`0,400..700;1,400..700` y `400..700`): 37 bloques `@font-face` → 18, y los estilos que piden `600` dejan de quedar clampados a 700. Los bytes descargados no cambian, verificado contra la API de Google Fonts
+- 📱 `viewport-fit=cover` + variables `--sat/--sar/--sab/--sal`: barra de scroll, botón flotante, pie, botones del lightbox y padding de `.page` quedan fuera de la muesca y de la barra de inicio; en pantallas sin muesca todo evalúa a 0
+
+**Verificación:**
+- ✅ **241 PASS / 0 FAIL** en viewports **exactos** de 1280 / 768 / 390 px (25 de Fase 4 + 40 de Fase 3 + 15/16 de la ovejita)
+- ✅ Sin overflow horizontal en 390px: `scrollWidth === clientWidth` y 0 elementos fuera del viewport, idéntico antes y después del cambio
+- ✅ Las tres WebP cargan con `naturalWidth/naturalHeight` exactos
+- ✅ `node --check` OK en los 2 bloques, llaves CSS 154/154, etiquetas balanceadas (10/10 botones, 8 `<img>`)
 
 ### v1.5.1 (2026-09-25)
 
@@ -336,6 +359,9 @@ No inviertas el orden de los hijos: la ovejita va **primero** y la tarjeta despu
 
 - **IntersectionObserver**: Las animaciones solo se ejecutan cuando las secciones son visibles.
 - **`loading="lazy"`**: Las imágenes se cargan diferidamente.
+- **Imágenes en WebP**: las fotos de la galería pesan ~34% menos que en JPEG y declaran sus dimensiones reales para evitar layout shift.
+- **Fuentes por rango variable**: una sola petición cubre todos los pesos, sin descargar variantes que la página no usa.
+- **Safe areas con `env()`**: los controles fijos se calculan con variables que valen 0 en pantallas sin muesca, sin media queries extra.
 - **`will-change`**: Propiedad optimizada para elementos animados.
 - **`image-rendering: pixelated`**: Optimización para GIFs de baja resolución.
 

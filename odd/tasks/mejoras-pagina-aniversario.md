@@ -20,6 +20,9 @@ ritmo a la lectura.
 | Estrategia de entrega | Commits de trabajo directos en `main` (histórico del repo). Estrategia `ask-on-risk`: si el acumulado supera ~400 líneas autorizadas, preguntar antes de continuar. |
 | TDD estricto | **Apagado.** No hay `sdd-init`, ni framework de tests, ni `package.json`. Verificación funcional ordinaria. |
 | Ruta de implementación | **Inline directo** — el trabajo toca un único archivo no trivial (`index.html`), no dispara el trigger de delegación por volumen de archivos. |
+| Fuentes: pesos sueltos vs. rangos | **Rangos** (`400..700`). Medido contra la API de Google Fonts: devuelven **las mismas URLs de woff2**, porque las dos familias ya son variables. El cambio no ahorra bytes, ahorra bloques `@font-face` (37 → 18) y corrige el peso 600. Se descarta documentarlo como ahorro de red. |
+| Convertir los GIFs a WebP | **No.** `canvas` captura un solo fotograma y perdería la animación; no hay `ffmpeg`/`sharp`/`gif2webp` disponibles. Se documenta como límite en el README. |
+| Tocar el MP3 de 8.9 MB | **No, sin pedirlo.** Usa `preload="metadata"` y no entra en el primer render. Es la mayor oportunidad de peso del repo (97%) pero cambiar la música del regalo es decisión de la usuaria. |
 
 ## Alcance
 
@@ -57,9 +60,9 @@ ritmo a la lectura.
 
 ### Fase 4 — Performance
 
-- [ ] **T10** Optimizar imágenes a WebP (objetivo: −40/60% de peso)
-- [ ] **T11** Reducir familias/variantes de fuentes
-- [ ] **T12** Safe areas para notch (`env(safe-area-inset-*)`)
+- [x] **T10** Optimizar imágenes a WebP (objetivo: −40/60% de peso)
+- [x] **T11** Reducir familias/variantes de fuentes
+- [x] **T12** Safe areas para notch (`env(safe-area-inset-*)`)
 
 ### Cierre
 
@@ -92,8 +95,15 @@ powershell -Command "$h=Get-Content -Raw index.html; $j=[regex]::Match($h,'(?s)<
 # 2. Estructura básica del HTML
 powershell -Command "$h=Get-Content -Raw index.html; foreach($t in 'section','article','button'){ $o=([regex]::Matches($h,\"<$t[ >]\")).Count; $c=([regex]::Matches($h,\"</$t>\")).Count; \"$t: $o abierto / $c cerrado\" }"
 
-# 3. Peso de assets (antes/después de la Fase 4)
-powershell -Command "Get-ChildItem *.jpg,*.jpeg,*.gif,*.png -ErrorAction SilentlyContinue | Measure-Object Length -Sum | ForEach-Object { '{0:N1} KB total' -f ($_.Sum/1KB) }"
+# 3. Peso de assets (Fase 4)
+powershell -Command "Get-ChildItem *.webp,*.gif,*.mp3,*.jpg,*.jpeg -ErrorAction SilentlyContinue | Measure-Object Length -Sum | ForEach-Object { '{0:N1} KB total' -f ($_.Sum/1KB) }"
+
+# 4. Las fotos declaran su tamaño real (anti-CLS)
+powershell -Command "$h=Get-Content -Raw index.html; [regex]::Matches($h,'<img src=\"foto[^\"]+\"[^>]*width=\"(\d+)\" height=\"(\d+)\"') | ForEach-Object { $_.Value }"
+
+# 5. Viewport exacto para pruebas de layout: NO usar --window-size=390
+#    (Chrome recorta la ventana a ~516px). Montar la pagina en un iframe
+#    del ancho deseado dentro de una ventana grande y medir en contentDocument.
 ```
 
 Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5.
@@ -111,7 +121,7 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T7 | ✅ Hecha | Parallax a dos velocidades con `--scroll-p` (160px / 460px), `inset` negativo igual al recorrido para que nunca se descubra el borde |
 | T8 | ✅ Hecha | Línea de 2px con degradado + nodos de 14px; `left` del nodo `-6px` (no `-7px`) para que su centro caiga sobre el centro de la línea — medido `0,0,0px` en los 3 anchos; sin pisar ninguna tarjeta |
 | T9 | ✅ Hecha | Lacre SVG en flujo con `role="img"`; dibujo `5,5 110x110` y texto `34,81 53x15`, ambos dentro del `viewBox`; no tapa firma ni GIF |
-| T10–T12 | ⏳ Pendiente | Fase 4 |
+| T10–T12 | ✅ Hechas | 3 fotos a WebP: 216 KB → 142 KB (**−34%**), payload inicial sin música **−21%**; `width`/`height` corregidos a las dimensiones reales (CLS 0); fuentes por rango variable: 37 → 18 bloques `@font-face` y el `600` deja de clamparse a 700, **mismos bytes** (verificado contra la API); `viewport-fit=cover` + `--sat/--sar/--sab/--sal` en barra, botón flotante, pie, lightbox y `.page` |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
 | T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` + `eb7359c` docs (Fase 1) · `3478998` feat (Fase 2) — los 5 en `origin/main` |
 | T15 | ✅ Hecha | Ovejita: `ovejaVuelta` autónoma + `ovejaSalto` al clic, sin colisión con foto/título/tarjeta — 39/39 PASS en 3 anchos. Ampliado: siempre en el mismo lado (ver "ovejita al mismo lado") |
@@ -420,20 +430,78 @@ Verificado con cálculo: el **15/10/2026** se cumplen exactamente **14 años** d
 conversación (y 13 desde la fecha oficial). Faltan 21 días desde el 24/09/2026. El rótulo
 "14 años" es correcto y **no se modifica ningún texto**.
 
-**Siguiente paso:** Fase 4 (T10 imágenes a WebP, T11 menos familias de fuentes, T12 safe
-areas para notch).
+### Verificación ejecutada (Fase 4 - T10, T11, T12)
+
+Las tres suites corrieron sobre el `index.html` final, cada una en un **viewport exacto**
+montado en un `iframe` de 1280 / 768 / 390 px:
+
+```
+test-fase4 @1280px : PASS=25 FAIL=0
+test-fase4 @768px  : PASS=25 FAIL=0
+test-fase4 @390px  : PASS=25 FAIL=0
+test-fase3-b @1280px : PASS=40 FAIL=0
+test-fase3-b @768px  : PASS=40 FAIL=0
+test-fase3-b @390px  : PASS=40 FAIL=0
+test-ovejita-lado @1280px : PASS=16 FAIL=0
+test-ovejita-lado @768px  : PASS=15 FAIL=0
+test-ovejita-lado @390px  : PASS=15 FAIL=0
+
+TOTAL: PASS=241  FAIL=0
+```
+
+Estructura:
+
+```
+lineas: 1228
+CSS llaves: 154 / 154  -> OK
+scripts: 2   script[0] (12 lineas): OK   script[1] (405 lineas): OK
+section : OK   article : OK   div : OK   svg : OK
+button : open=10 close=10   (el 11 que contaba el contador era un comentario CSS)
+img : 8
+assets referenciados: todos en disco; ninguna referencia sobreviviente a .jpg/.jpeg
+```
+
+**Hallazgo del entorno (cuarto de la serie):** `--window-size=390` **no** produce un
+viewport de 390px. Chrome recorta la ventana a un mínimo de ~516px, así que "390" corría en
+realidad a `innerWidth=492`, y `768`/`1280` salían `744`/`1256` por los bordes de ventana.
+**Todas las corridas anteriores de la feature corrieron a esos anchos, no a los declarados.**
+La forma exacta es montar la página en un `iframe` del ancho deseado dentro de una ventana
+grande y medir desde el `contentDocument`. Repite el patrón de la serie: el harness mintió,
+no la página.
+
+**Hallazgo de medición (T11):** el test anterior de fuentes marcaba `1,400` (Cormorant
+itálica 400) como **no usada**. Es al revés: `.lightbox-figure figcaption` la usa. La
+medición correcta recorre `getComputedStyle` de todos los elementos **con el lightbox
+abierto**. Además apareció una cara que **no estaba en la URL**: DM Sans `600`, pedida por
+tres reglas y hasta ahora renderizada clampada a 700.
+
+**Hallazgo de honestidad (T11):** consultada la API de Google Fonts, los pesos sueltos
+(`400;500;700`) y los rangos (`400..700`) devuelven **las mismas URLs de woff2**: las dos
+familias ya se sirven como una única fuente variable por subconjunto. Por lo tanto el
+cambio **no ahorra bytes** —el navegador ya descargaba 4 archivos `latin`—, ahorra 19 bloques
+`@font-face` y corrige el peso 600. Se descartó afirmar un ahorro de red que no existe.
+
+**Hallazgo de layout (T10):** los `width`/`height` declarados eran `800×600` para las tres
+fotos y **ninguna** mide eso (960×720, 960×1280, 520×1152). Eso es un CLS garantizado: el
+navegador reservaba una caja 4:3 y la foto real la desplazaba al decodificar. Corregido.
+
+**Límites confirmados:** los GIFs no se convierten (canvas captura un solo fotograma y
+mataría la animación; no hay `ffmpeg`/`sharp`/`gif2webp` disponibles). El mp3 de 8.9 MB
+(97% del repo) usa `preload="metadata"` y no entra en el primer render.
 
 **Líneas autorizadas:** Fase 1 cerró en 631 → 801 (**+170**). Fase 2 cerró en 801 → 1066
 (**+265**). T15 cerró en 1066 → 1125 (**+59**). T16 cerró en 1125 → 1157 (**+32** — refactor
 nulo: se cambió el mecanismo, no se agregó lógica nueva). Fase 3 cerró en 1157 → 1218
 (**+61**). Corrección de la ovejita cerró en 1218 → 1221 (**+3** — 1 de reglas CSS quitado
-y 3 de comentarios). Acumulado de la feature: **+590**
+y 3 de comentarios). Fase 4 cerró en 1221 → 1228 (**+7** — 6 de variables y reglas safe-area
+y 1 de comentario; el `index.html` en realidad **bajó 549 bytes** porque la URL de fuentes
+por rango es más corta que la de pesos sueltos). Acumulado de la feature: **+597**
 sobre las ~400 que eran la referencia de planificación. No se parte la entrega: lightbox,
-volumen, brillo, ovejita, interruptor y pulido visual son comportamientos coherentes y la
-corrección natural los incluye; además la entrega es commit directo en `main` sin PR, así
-que no hay puerta de tamaño que salte. Se registra el sobrepaso para que la fase 4 se
-planifique con margen — y conviene que lo sea: T10 (convertir imágenes a WebP) es la que
-tiene más potencial de **bajar** líneas y peso.
+volumen, brillo, ovejita, interruptor, pulido visual y performance son comportamientos
+coherentes y la corrección natural los incluye; además la entrega es commit directo en
+`main` sin PR, así que no hay puerta de tamaño que salte.
+
+**Fase 4 cerrada.** No quedan tareas pendientes en este documento.
 
 **Infra:** `.gitignore` ahora excluye `.atl/` (metadatos de herramientas), para que en el
 repo solo entre el código de la usuaria.
