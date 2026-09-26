@@ -27,6 +27,9 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 | 🔊 **Control de volumen** | Slider de volumen y botón de silenciar que recuerda el último nivel |
 | ✨ **Brillo de la carta** | Resplandor que sigue al cursor sobre la carta final |
 | 🐑 **Ovejita viva** | La ovejita de cada tarjeta deambula sola y reacciona con una vueltita al hacer clic |
+| 🏔️ **Fondo con parallax** | Las dos capas del fondo se deslizan a distinta velocidad al hacer scroll |
+| 📅 **Línea de tiempo** | Una línea con nodos conecta los momentos de 2013, 2019 y 2025 |
+| 💌 **Sello en la carta** | Lacre dibujado en SVG que remata la carta al pie |
 
 ## 🔧 Mejoras implementadas
 
@@ -43,6 +46,13 @@ Una historia de amor que comenzó en Ragnarok Online y se convirtió en una aven
 - **Control de volumen**: Slider de volumen con relleno `--fill` y botón de silenciar que conmuta entre el último nivel y cero. El volumen se guarda en `lastVolume` solo cuando es distinto de cero, así que silenciar y volver nunca pierde el nivel anterior. `aria-pressed` y el texto accesible cambian con el estado.
 - **Brillo de la carta**: Un resplandor radial sigue al cursor sobre la carta final usando las custom properties `--mx`/`--my`. El listener está siempre adjunto y consulta el interruptor al vuelo: si las animaciones están apagadas, el brillo queda en su posición estática.
 - **`.gitignore`**: Ahora ignora `.atl/` para que los metadatos de las herramientas de asistencia no entren al repositorio.
+
+### Fase 3 — Pulido visual
+
+- **Parallax del fondo**: Las dos capas de fondo (`body::before` con el gradiente y `body::after` con el patrón de corazones) se desplazan a **distinta velocidad** según la variable `--scroll-p`, que va de 0 a 1 a lo largo del documento. La escriben el mismo `requestAnimationFrame` que ya movía la barra de scroll, así que **no hay ni un listener ni un rAF nuevos**. El gradiente recorre 160px (cielo lejano) y el patrón 460px (se aproxima): dos velocidades es lo que da profundidad. Cada capa tiene un `inset` negativo igual a su recorrido, de modo que nunca se descubre el borde, ni siquiera al 100% de scroll. Bajo `anim-off` vuelve a `transform: none` y sigue cubriendo todo.
+- **Línea de tiempo**: Una línea de 2px con degradado recorre la columna de momentos y cada fila cuelga de ella con un nodo circular de 14px, pintado con el color de acento y un halo suave. El canaleta (`--tl-gutter`: 46px en escritorio, 30px en móvil) es el aire que deja la línea y sus nodos a la izquierda de las tarjetas. Los años **no se repiten** en la línea: ya están en el pie de cada tarjeta, así que la línea solo aporta la conexión 2013 → 2019 → 2025.
+- **Sello en la carta**: Un lacre en SVG inline (dos círculos concéntricos, el segundo punteado, un corazón y el rótulo "14 AÑOS") remata la carta después del GIF. Va **en el flujo**, no superpuesto, así que nunca tapa texto; lleva un giro de -7° para que se lea estampado y no como un ícono. `role="img"` con `aria-label` para que el lector de pantalla lo anuncie.
+- **Sin tecnología nueva**: todo lo de la Fase 3 es CSS y media línea de JS. Se evaluó `animation-timeline: scroll()` para hacer el parallax puramente en CSS, pero el comportamiento en el navegador de verificación no fue consistente, así que se prefirió el patrón de `requestAnimationFrame` que la página ya usaba y ya estaba probado.
 
 ### Pulido — Ovejita de la galería
 
@@ -192,6 +202,26 @@ Duplica un bloque `.memory-row` en el HTML y modifica:
 - El año (`memory-footer-year`)
 
 ## 📋 Changelog
+
+### v1.5.0 (2026-09-25)
+
+**Nuevas funcionalidades:**
+- 🏔️ Parallax en las dos capas de fondo, a velocidad distinta entre sí, sin listeners nuevos
+- 📅 Línea de tiempo con degradado y nodos que conecta los momentos de 2013, 2019 y 2025
+- 💌 Sello tipo lacre en SVG inline al pie de la carta, con corazón y rótulo "14 AÑOS"
+
+**Mejoras:**
+- 📐 El canaleta de la línea de tiempo (`--tl-gutter`) se ajusta solo en móvil, de 46px a 30px
+- 🧊 El parallax se congela con el interruptor general de animaciones y el fondo sigue cubriendo el viewport
+- ♿ El sello es un `role="img"` con `aria-label`; el SVG sigue siendo texto seleccionable
+
+**Verificación:**
+- ✅ 120 aserciones funcionales, **0 fallos**, en 1280 / 768 / 390 px
+- ✅ Parallax: a mitad de scroll `--scroll-p = 0.5001` → capas en `-230px` y `-80px` (las dos, exactas)
+- ✅ La línea no pisa ninguna tarjeta y sus nodos caen al píxel sobre ella (250/250 y 39/39)
+- ✅ El sello no tapa ni la firma ni el GIF, y su dibujo y su texto caben en el `viewBox`
+- ✅ Regresión: contador, barra de scroll, lightbox, ovejita, corazones e interruptor — todo PASS
+- ✅ `node --check` en los 2 bloques, llaves CSS 155/155, etiquetas balanceadas
 
 ### v1.4.2 (2026-09-25)
 

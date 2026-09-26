@@ -51,9 +51,9 @@ ritmo a la lectura.
 
 ### Fase 3 — Pulido visual
 
-- [ ] **T7** Parallax sutil en el fondo
-- [ ] **T8** Línea de tiempo conectando 2013 → 2019 → 2025
-- [ ] **T9** Sello decorativo (SVG) en la carta
+- [x] **T7** Parallax sutil en el fondo
+- [x] **T8** Línea de tiempo conectando 2013 → 2019 → 2025
+- [x] **T9** Sello decorativo (SVG) en la carta
 
 ### Fase 4 — Performance
 
@@ -107,7 +107,10 @@ Verificación manual (usuario): abrir `index.html` y validar los criterios 1–5
 | T4 | ✅ Hecha | 3 fotos pasaron de `<div>` a `<button>`; apertura, `Escape`, flechas con wrap-around, trampa de `Tab`, clic en fondo, bloqueo del scroll y devolución del foco — todo PASS |
 | T5 | ✅ Hecha | Slider con `--fill`, botón de silenciar con `lastVolume`, `aria-pressed`/`aria-label`/`title` según estado |
 | T6 | ✅ Hecha | `--mx`/`--my` seteados por `pointermove` (69.99% / 20% medido); el listener está siempre adjunto y consulta `animacionesEncendidas()` (antes se condicionaba a `prefers-reduced-motion` al cargar) |
-| T7–T12 | ⏳ Pendiente | Fases 3-4 |
+| T7 | ✅ Hecha | Parallax a dos velocidades con `--scroll-p` (160px / 460px), `inset` negativo igual al recorrido para que nunca se descubra el borde |
+| T8 | ✅ Hecha | Línea de 2px con degradado + nodos de 14px; nodos alineados al píxel con la línea (250/250 desktop, 39/39 móvil) y sin pisar ninguna tarjeta |
+| T9 | ✅ Hecha | Lacre SVG en flujo con `role="img"`; dibujo `5,5 110x110` y texto `34,81 53x15`, ambos dentro del `viewBox`; no tapa firma ni GIF |
+| T10–T12 | ⏳ Pendiente | Fase 4 |
 | T13 | ✅ Hecha | README: tabla de características, sección "Fase 1", changelog v1.3.0, sección de personalización de fecha, estructura del proyecto |
 | T14 | ✅ Hecha | `c29d564` feat · `536be05` fix contador · `5912f4c` + `eb7359c` docs (Fase 1) · `3478998` feat (Fase 2) — los 5 en `origin/main` |
 | T15 | ✅ Hecha | Ovejita: `ovejaVuelta` autónoma + `ovejaSalto` al clic, sin colisión con foto/título/tarjeta — 39/39 PASS en 3 anchos |
@@ -300,6 +303,58 @@ se mide **búsqueda de tiempo** (`an.currentTime = t` en 8 puntos y `getBounding
 en lugar de esperar que el tiempo corra: prueba las keyframes exactamente, sin depender de
 que el harness produzca frames. `playState: running` confirma que el navegador la va a correr.
 
+### Verificación ejecutada (Fase 3 — T7, T8, T9)
+
+**Estructural:** `lineas: 1218` (1157 al cerrar T16 → **+61**) · `node --check: OK` en los 2
+bloques · llaves CSS `155/155` · etiquetas balanceadas (`section 4/4`, `article 3/3`,
+`div 34/34`, `svg 9/9`; el contador de `button` da 11/10 solo por un `<button>` escrito
+dentro de un comentario CSS, los reales son 10/10).
+
+**Funcional (headless Edge `--dump-dom`, 40 aserciones × 3 anchos = 120):**
+
+```
+40 PASS / 0 FAIL    escritorio 1280 · tablet 768 · celular 390
+
+T7  fondo con inset -460px y 1681px de alto (holgura para desplazarse)
+    scroll a mitad -> --scroll-p = 0.5001
+    capa de corazones = -230.046px   (= -460 x 0.5, exacto)
+    capa de gradiente =  -80.016px   (= -160 x 0.5, exacto)
+    DOS velocidades distintas -> parallax real
+    el fondo CUBRE el viewport (top=-690 bottom=991 vs vh=761)
+    con animaciones apagadas: transform=none en ambas y sigue cubriendo
+
+T8  la linea existe, mide 2px y lleva degradado
+    nodo 14x14 con radio 50% y borde rgb(214,51,132)
+    las 3 filas tienen nodo y los 3 caen SOBRE la linea
+      (nodo X = linea X: 250/250 desktop, 39/39 movil)
+    nodos DENTRO del contenedor (243.0 >= 227.0 desktop, 32.0 >= 24.0 movil)
+    la linea no pisa ninguna tarjeta (252 <= 273 desktop)
+    la linea recorre casi toda la columna (1732px, top=6 bottom=6)
+
+T9  sello con viewBox 0 0 120 120, role=img y aria-label
+    2 circulos concéntricos, corazon relleno rgb(214,51,132)
+    texto "14 AÑOS"
+    el dibujo cabe en el viewBox (5,5 110x110)
+    el texto cabe y se lee dentro del sello (34,81 53x15)
+    NO tapa la firma, NO tapa el GIF, queda dentro de la carta
+
+REG contador con valor · barra de scroll al 50% · lightbox abre y cierra
+    ovejita animando y clicable · corazones nacen · boton dice ON
+    8/8 secciones visibles con todo apagado
+```
+
+**Límite del entorno de verificación (segundo hallazgo del mismo tipo):** este harness
+**tampoco ejecuta `requestAnimationFrame`**. Se detectó porque T7 daba `p=0` *y* la barra
+de scroll (código viejo, intacto) marcaba `0%` — los dos fallan por la misma causa. El test
+llama a `updateScrollProgress()` a mano después del `scrollTo`, lo que verifica la lógica
+de cálculo y su efecto en el CSS; el pipeline de rAF es el mismo que la barra de scroll
+que la usuaria ya vio funcionando en pantalla.
+
+**Decisión de diseño registrada:** se evaluó `animation-timeline: scroll(root)` para hacer
+el parallax **sin JS** (soporte confirmado con `@supports`, pero `transform` no se aplicaba
+de forma consistente). Se descartó y se fue por el `requestAnimationFrame` que la página ya
+usaba — patrón probado en el repo, cero tecnología nueva.
+
 ### ✅ Discrepancia resuelta (ya no bloquea nada)
 
 La usuaria confirmó el origen de las dos cifras:
@@ -311,15 +366,19 @@ Verificado con cálculo: el **15/10/2026** se cumplen exactamente **14 años** d
 conversación (y 13 desde la fecha oficial). Faltan 21 días desde el 24/09/2026. El rótulo
 "14 años" es correcto y **no se modifica ningún texto**.
 
-**Siguiente paso:** Fase 3 (T7 parallax, T8 línea de tiempo, T9 sello en la carta).
+**Siguiente paso:** Fase 4 (T10 imágenes a WebP, T11 menos familias de fuentes, T12 safe
+areas para notch).
 
 **Líneas autorizadas:** Fase 1 cerró en 631 → 801 (**+170**). Fase 2 cerró en 801 → 1066
 (**+265**). T15 cerró en 1066 → 1125 (**+59**). T16 cerró en 1125 → 1157 (**+32** — refactor
-nulo: se cambió el mecanismo, no se agregó lógica nueva). Acumulado de la feature: **+526**
+nulo: se cambió el mecanismo, no se agregó lógica nueva). Fase 3 cerró en 1157 → 1218
+(**+61**). Acumulado de la feature: **+587**
 sobre las ~400 que eran la referencia de planificación. No se parte la entrega: lightbox,
-volumen, brillo, ovejita e interruptor son comportamientos coherentes y la corrección natural
-los incluye; además la entrega es commit directo en `main` sin PR, así que no hay puerta de
-tamaño que salte. Se registra el sobrepaso para que las fases 3 y 4 se planifiquen con margen.
+volumen, brillo, ovejita, interruptor y pulido visual son comportamientos coherentes y la
+corrección natural los incluye; además la entrega es commit directo en `main` sin PR, así
+que no hay puerta de tamaño que salte. Se registra el sobrepaso para que la fase 4 se
+planifique con margen — y conviene que lo sea: T10 (convertir imágenes a WebP) es la que
+tiene más potencial de **bajar** líneas y peso.
 
 **Infra:** `.gitignore` ahora excluye `.atl/` (metadatos de herramientas), para que en el
 repo solo entre el código de la usuaria.

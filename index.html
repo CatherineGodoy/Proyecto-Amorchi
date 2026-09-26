@@ -34,6 +34,7 @@
       --shadow-hover:0 12px 35px rgba(214,51,132,.15);
       --radius:20px;
       --max-w:850px;
+      --tl-gutter:46px;     /* aire a la izquierda de los momentos para la línea de tiempo */
       --font-serif:'Cormorant Garamond',Georgia,serif;
       --font-script:'Great Vibes',cursive;
       --font-sans:'DM Sans',system-ui,sans-serif;
@@ -52,14 +53,22 @@
     h1,h2,h3{font-family:var(--font-serif);font-weight:600;color:var(--ink)}
     
     /* ===== BACKGROUND ROMÁNTICO ===== */
+    /* Parallax: las dos capas se deslizan a distinta velocidad según --scroll-p
+       (0 → 1 a lo largo de todo el documento, que lo escribe el mismo rAF de la
+       barra de scroll, asi que no hay listener nuevo). El gradiente va lento
+       (cielo lejano) y el patrón de corazones más rápido (se aproxima): dos
+       velocidades es lo que da la sensación de profundidad. El inset negativo
+       es la holgura para que al desplazarse no se descubra el borde. */
     body::before{
-      content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+      content:"";position:fixed;inset:-160px 0;z-index:-2;pointer-events:none;
       background:linear-gradient(170deg, #fff5f8 0%, #fdf2f8 40%, #fef6ee 100%);
+      transform:translateY(calc(var(--scroll-p, 0) * -160px));
     }
     body::after{
-      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.06;
+      content:"";position:fixed;inset:-460px 0;z-index:-1;pointer-events:none;opacity:.06;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cpath d='M30 15c-4-6-12-6-16 0s-2 14 16 28c18-14 20-22 16-28s-12-6-16 0z' fill='%23d63384'/%3E%3C/svg%3E");
       background-size:70px 70px;
+      transform:translateY(calc(var(--scroll-p, 0) * -460px));
     }
 
     /* ===== LAYOUT ===== */
@@ -158,10 +167,24 @@
       letter-spacing:.02em;
     }
 
+    /* ===== LÍNEA DE TIEMPO 2013 → 2019 → 2025 ===== */
+    /* La línea corre por el canaleta de la izquierda y las filas cuelgan de ella
+       con un nodo. Los años no se repiten acá: ya están en el pie de cada tarjeta,
+       así que la línea solo aporta la conexión entre ellos. */
     .memories-container{
       display:flex;
       flex-direction:column;
       gap:2.5rem;
+      position:relative;
+      padding-left:var(--tl-gutter);
+    }
+    .memories-container::before{
+      content:"";position:absolute;
+      left:calc(var(--tl-gutter) / 2);
+      top:6px;bottom:6px;width:2px;border-radius:2px;
+      background:linear-gradient(180deg,
+        rgba(214,51,132,.12) 0%, var(--accent) 30%,
+        var(--accent) 70%, rgba(214,51,132,.12) 100%);
     }
 
     .memory-row {
@@ -169,6 +192,16 @@
       align-items: center;
       gap: 1.5rem;
       width: 100%;
+      position: relative;
+    }
+    /* Nodo sobre la línea, a la altura de la mitad de la tarjeta */
+    .memory-row::before{
+      content:"";position:absolute;top:50%;
+      left:calc(var(--tl-gutter) / -2 - 7px);
+      transform:translateY(-50%);
+      width:14px;height:14px;border-radius:50%;
+      background:var(--white);border:3px solid var(--accent);
+      box-shadow:0 0 0 4px rgba(214,51,132,.13);
     }
     .memory-row:nth-child(even) {
       flex-direction: row-reverse;
@@ -298,6 +331,16 @@
     .letter h2{margin-bottom:1rem;color:var(--accent-dark);font-size:clamp(1.6rem,3vw,2.2rem);font-family:var(--font-serif)}
     .letter p{color:var(--ink);font-style:italic;font-size:clamp(1rem,1.7vw,1.15rem);line-height:1.8;margin-bottom:1rem;font-family:var(--font-serif);font-weight:600}
     .letter .signature{margin-top:1.5rem;font-family:var(--font-script);font-size:2rem;color:var(--accent);font-weight:400}
+    /* Sello estampado que remata la carta: va en el flujo (nunca tapa texto)
+       y lleva un giro leve para que se lea como un lacre y no como un ícono. */
+    .letter-seal{
+      display:block;width:106px;height:106px;margin:1.5rem auto 0;
+      color:var(--accent);transform:rotate(-7deg);opacity:.85;
+    }
+    .letter-seal text{
+      font-family:var(--font-sans);font-size:11px;font-weight:700;
+      letter-spacing:.1em;fill:currentColor;
+    }
     /* Brillo sutil que sigue el cursor al pasar por la carta */
     .letter::before{
       content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
@@ -455,6 +498,7 @@
 
     /* ===== RESPONSIVE ===== */
     @media (max-width:768px){
+      :root{ --tl-gutter:30px }
       .memory-row, .memory-row:nth-child(even) {
         flex-direction: column;
         align-items: center;
@@ -477,6 +521,12 @@
        no que podes hacer: por eso esto es una clase y no un @media candado.
        Regla de oro: apagar animaciones apaga el MOVIMIENTO, nunca el contenido
        — .section conserva opacity 1 para que nada quede invisible. */
+    html.anim-off body::before,
+    html.anim-off body::after {
+      /* Parallax congelado: el fondo vuelve a su reposo y sigue cubriendo todo
+         (el inset negativo lo garantiza aunque no haya transform). */
+      transform: none !important;
+    }
     html.anim-off .section {
       opacity: 1 !important;
       transform: none !important;
@@ -683,6 +733,14 @@
         <div style="text-align: center; margin-top: 1.5rem;">
           <img src="bubu-dudu.gif" alt="Bubu y Dudu" style="width: 150px; height: 150px; object-fit: contain; border-radius: 50%; box-shadow: 0 4px 15px rgba(214,51,132,.2);">
         </div>
+
+        <!-- Sello: remata la carta como un lacre -->
+        <svg class="letter-seal" viewBox="0 0 120 120" role="img" aria-label="Sello: 14 años juntos">
+          <circle cx="60" cy="60" r="55" fill="rgba(255,255,255,.6)" stroke="currentColor" stroke-width="2.5"/>
+          <circle cx="60" cy="60" r="47" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4.5" opacity=".7"/>
+          <path d="M60 69C50 61 42 55 42 48c0-6 5-10 10-10 4 0 7 2 8 5 1-3 4-5 8-5 5 0 10 4 10 10 0 7-8 13-18 21z" fill="currentColor"/>
+          <text x="60" y="92" text-anchor="middle">14 AÑOS</text>
+        </svg>
       </div>
     </section>
 
@@ -981,6 +1039,9 @@
       const scrolled = docEl.scrollTop || document.body.scrollTop || 0;
       const pct = scrollable > 0 ? Math.min(100, (scrolled / scrollable) * 100) : 0;
       scrollProgress.style.width = pct + '%';
+      // Parallax del fondo: sale de esta misma corrida de frames, así que no
+      // hace falta un listener ni un rAF nuevos. 0 → 1 a lo largo del documento.
+      docEl.style.setProperty('--scroll-p', (pct / 100).toFixed(4));
       scrollTicking = false;
     }
 
