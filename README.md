@@ -145,7 +145,6 @@ El botón que antes solo apagaba los corazones ahora decide **si la página se a
 ├── foto1-primer-encuentro.webp    # Foto del primer encuentro (2013, WebP)
 ├── foto2-momentos-felices.webp    # Foto de momentos felices (2019, WebP)
 ├── foto3-siempre-juntos.webp      # Foto de siempre juntos (2025, WebP)
-└── odd/tasks/                    # Documento de seguimiento de mejoras
 ```
 
 ## 🎨 Personalización

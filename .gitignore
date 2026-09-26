@@ -31,3 +31,6 @@ build/
 
 # Metadata de herramientas del asistente (no es código del proyecto)
 .atl/
+
+# Documento interno de seguimiento de la feature (se mantiene solo en local)
+odd/
